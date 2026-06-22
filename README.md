@@ -10,7 +10,7 @@ The system runs a scraper backend every 10 minutes to discover new official rele
 * **Frontend**: Next.js (App Router, React 19, TypeScript)
 * **Styling**: Tailwind CSS (Premium Dark Slate Theme)
 * **Backend Automation**: Python 3.10+, BeautifulSoup4, pdfplumber
-* **AI Processing**: Google Gemini 1.5 Flash (Free Tier API)
+* **AI Processing**: Google Gemini 2.5 Flash (Free Tier API)
 * **Database & Auth**: Supabase PostgreSQL
 * **Hosting**: Vercel & GitHub Actions
 
