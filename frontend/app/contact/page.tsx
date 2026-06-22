@@ -20,7 +20,7 @@ export default function ContactUs() {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 text-sm">
         {/* Contact Info */}
         <div className="md:col-span-5 space-y-6">
-          <div className="bg-slate-900/40 border border-slate-850 rounded-xl p-5 space-y-4">
+          <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-5 space-y-4">
             <h2 className="text-base font-bold text-white">General Inquiries</h2>
             <p className="text-slate-400 leading-relaxed">
               If you spotted any factual errors in our summaries, want to report a broken link, or have general feedback, contact us directly.
@@ -37,7 +37,7 @@ export default function ContactUs() {
         </div>
 
         {/* Contact Form */}
-        <div className="md:col-span-7 bg-[#111827]/30 border border-slate-850 rounded-2xl p-6 space-y-4">
+        <div className="md:col-span-7 bg-[#111827]/30 border border-slate-800 rounded-2xl p-6 space-y-4">
           <h2 className="text-base font-bold text-slate-200">Send us a Message</h2>
           <form className="space-y-4">
             <div>

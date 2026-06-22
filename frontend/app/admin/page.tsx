@@ -24,7 +24,7 @@ export default async function AdminDashboard({ searchParams }: AdminProps) {
       <div className="min-h-[80vh] flex items-center justify-center px-4 py-16">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[200px] bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none" />
         
-        <div className="w-full max-w-md bg-[#111827]/40 border border-slate-850 rounded-2xl p-8 space-y-6 shadow-2xl relative z-10 backdrop-blur-xl">
+        <div className="w-full max-w-md bg-[#111827]/40 border border-slate-800 rounded-2xl p-8 space-y-6 shadow-2xl relative z-10 backdrop-blur-xl">
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-extrabold tracking-tight text-white flex items-center justify-center gap-2">
               <Landmark className="h-6 w-6 text-emerald-400" /> Admin Console Login
@@ -166,7 +166,7 @@ export default async function AdminDashboard({ searchParams }: AdminProps) {
           <form action={logoutAction}>
             <button
               type="submit"
-              className="px-4 py-2.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-350 hover:text-slate-200 font-semibold rounded-lg text-sm transition flex items-center gap-2 cursor-pointer"
+              className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-350 hover:text-slate-200 font-semibold rounded-lg text-sm transition flex items-center gap-2 cursor-pointer"
             >
               Sign Out
             </button>
@@ -185,7 +185,7 @@ export default async function AdminDashboard({ searchParams }: AdminProps) {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="p-5 bg-slate-900/40 border border-slate-850 rounded-xl flex items-center justify-between">
+        <div className="p-5 bg-slate-900/40 border border-slate-800 rounded-xl flex items-center justify-between">
           <div>
             <span className="text-xs uppercase font-semibold text-slate-500">Published Posts</span>
             <span className="block text-3xl font-bold text-white mt-1">{totalArticles || 0}</span>
@@ -196,7 +196,7 @@ export default async function AdminDashboard({ searchParams }: AdminProps) {
           </div>
         </div>
 
-        <div className="p-5 bg-slate-900/40 border border-slate-850 rounded-xl flex items-center justify-between">
+        <div className="p-5 bg-slate-900/40 border border-slate-800 rounded-xl flex items-center justify-between">
           <div>
             <span className="text-xs uppercase font-semibold text-slate-500">Page Views</span>
             <span className="block text-3xl font-bold text-white mt-1">{totalViews.toLocaleString()}</span>
@@ -207,7 +207,7 @@ export default async function AdminDashboard({ searchParams }: AdminProps) {
           </div>
         </div>
 
-        <div className="p-5 bg-slate-900/40 border border-slate-850 rounded-xl flex items-center justify-between">
+        <div className="p-5 bg-slate-900/40 border border-slate-800 rounded-xl flex items-center justify-between">
           <div>
             <span className="text-xs uppercase font-semibold text-slate-500">Unique Visitors</span>
             <span className="block text-3xl font-bold text-white mt-1">{uniqueVisitors.toLocaleString()}</span>
@@ -218,7 +218,7 @@ export default async function AdminDashboard({ searchParams }: AdminProps) {
           </div>
         </div>
 
-        <div className="p-5 bg-slate-900/40 border border-slate-850 rounded-xl flex items-center justify-between">
+        <div className="p-5 bg-slate-900/40 border border-slate-800 rounded-xl flex items-center justify-between">
           <div>
             <span className="text-xs uppercase font-semibold text-slate-500">Crawl Success</span>
             <span className="block text-3xl font-bold text-white mt-1">{successRate}%</span>
@@ -233,7 +233,7 @@ export default async function AdminDashboard({ searchParams }: AdminProps) {
       {/* Traffic Analytics (Visual Referrers and Popular Pages) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Traffic Sources progress bars */}
-        <div className="lg:col-span-5 bg-[#111827]/30 border border-slate-850 rounded-2xl p-6 space-y-4">
+        <div className="lg:col-span-5 bg-[#111827]/30 border border-slate-800 rounded-2xl p-6 space-y-4">
           <h2 className="text-lg font-bold text-slate-200 flex items-center gap-2">
             <BarChart2 className="h-5 w-5 text-emerald-400" /> Traffic Referrals
           </h2>
@@ -248,7 +248,7 @@ export default async function AdminDashboard({ searchParams }: AdminProps) {
                       <span className="text-slate-350">{source}</span>
                       <span className="text-slate-400">{count} clicks ({percentage}%)</span>
                     </div>
-                    <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-850">
+                    <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
                       <div
                         className={`h-full rounded-full bg-gradient-to-r ${
                           source === "Google Search" ? "from-emerald-500 to-teal-500" :
@@ -266,18 +266,18 @@ export default async function AdminDashboard({ searchParams }: AdminProps) {
         </div>
 
         {/* Most Popular Pages list */}
-        <div className="lg:col-span-7 bg-[#111827]/30 border border-slate-850 rounded-2xl p-6 space-y-4">
+        <div className="lg:col-span-7 bg-[#111827]/30 border border-slate-800 rounded-2xl p-6 space-y-4">
           <h2 className="text-lg font-bold text-slate-200">Most Popular Pages</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-slate-850 text-slate-400 font-semibold">
+                <tr className="border-b border-slate-800 text-slate-400 font-semibold">
                   <th className="pb-3">Page Path / Slug</th>
                   <th className="pb-3 text-right">Views</th>
                   <th className="pb-3 text-right">Share of Traffic</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-850">
+              <tbody className="divide-y divide-slate-800">
                 {sortedPages.map((page) => {
                   const share = totalViews > 0 ? Math.round((page.count / totalViews) * 100) : 0;
                   return (
@@ -306,7 +306,7 @@ export default async function AdminDashboard({ searchParams }: AdminProps) {
       {/* Scraper Logs & CMS Table */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Scraper Run History */}
-        <div className="lg:col-span-6 bg-[#111827]/30 border border-slate-850 rounded-2xl p-6 space-y-4">
+        <div className="lg:col-span-6 bg-[#111827]/30 border border-slate-800 rounded-2xl p-6 space-y-4">
           <h2 className="text-lg font-bold text-slate-200 flex items-center gap-2">
             <Terminal className="h-5 w-5 text-emerald-400" /> Scraper Log (Last 10 Runs)
           </h2>
@@ -320,7 +320,7 @@ export default async function AdminDashboard({ searchParams }: AdminProps) {
                   <th className="pb-3 text-right">Tokens</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-850">
+              <tbody className="divide-y divide-slate-800">
                 {crawls && crawls.map((c) => (
                   <tr key={c.id} className="text-slate-300">
                     <td className="py-3.5">{new Date(c.started_at).toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', day: '2-digit', month: 'short' })}</td>
@@ -345,13 +345,13 @@ export default async function AdminDashboard({ searchParams }: AdminProps) {
         </div>
 
         {/* Content Review board */}
-        <div className="lg:col-span-6 bg-[#111827]/30 border border-slate-850 rounded-2xl p-6 space-y-4">
+        <div className="lg:col-span-6 bg-[#111827]/30 border border-slate-800 rounded-2xl p-6 space-y-4">
           <h2 className="text-lg font-bold text-slate-200 flex items-center gap-2">
             <FileSignature className="h-5 w-5 text-emerald-400" /> Article Review Board (CMS)
           </h2>
           <div className="space-y-4 pt-2">
             {notifications && notifications.map((n) => (
-              <div key={n.id} className="flex justify-between items-start gap-4 border-b border-slate-850 pb-3 last:border-0 last:pb-0">
+              <div key={n.id} className="flex justify-between items-start gap-4 border-b border-slate-800 pb-3 last:border-0 last:pb-0">
                 <div className="space-y-1">
                   <span className="block text-xs font-bold text-slate-350 line-clamp-1 leading-snug">
                     {n.article_title}

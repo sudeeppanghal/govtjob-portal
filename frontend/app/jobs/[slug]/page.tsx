@@ -168,7 +168,7 @@ export default async function JobDetail({ params }: DetailProps) {
             </h1>
 
             {/* Quick Fact Summary */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-slate-900/60 border border-slate-850 rounded-xl text-xs text-slate-300">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-slate-900/60 border border-slate-800 rounded-xl text-xs text-slate-300">
               <div className="space-y-1">
                 <span className="text-slate-500 block">Education</span>
                 <span className="font-semibold flex items-center gap-1">
@@ -201,7 +201,7 @@ export default async function JobDetail({ params }: DetailProps) {
 
           {/* Render Markdown Content as Clean HTML */}
           <div
-            className="prose prose-invert max-w-none bg-[#111827]/20 border border-slate-850/60 rounded-2xl p-6 sm:p-8"
+            className="prose prose-invert max-w-none bg-[#111827]/20 border border-slate-800/60 rounded-2xl p-6 sm:p-8"
             dangerouslySetInnerHTML={{ __html: htmlContent }}
           />
         </div>
@@ -242,7 +242,7 @@ export default async function JobDetail({ params }: DetailProps) {
           </div>
 
           {/* Related Jobs */}
-          <div className="bg-slate-900/20 border border-slate-850 rounded-xl p-5 space-y-4">
+          <div className="bg-slate-900/20 border border-slate-800 rounded-xl p-5 space-y-4">
             <h3 className="font-bold text-slate-200 text-sm uppercase tracking-wider">Related Alerts</h3>
             {related && related.length === 0 ? (
               <p className="text-xs text-slate-500">No related jobs found.</p>

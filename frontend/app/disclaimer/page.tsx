@@ -28,7 +28,7 @@ export default function Disclaimer() {
           </p>
         </div>
 
-        <h2 className="text-lg font-bold text-white mt-6 border-b border-slate-850 pb-2">Source of Information</h2>
+        <h2 className="text-lg font-bold text-white mt-6 border-b border-slate-800 pb-2">Source of Information</h2>
         <p>
           All notification details, admit card release schedules, answer keys, results, and government scheme bulletins published on this portal are compiled programmatically or manually from official, publicly available portals. These sources include:
         </p>
@@ -39,7 +39,7 @@ export default function Disclaimer() {
           <li>Press Information Bureau (PIB): <a href="https://pib.gov.in" target="_blank" rel="noopener noreferrer" className="text-emerald-400 underline">https://pib.gov.in</a></li>
         </ul>
 
-        <h2 className="text-lg font-bold text-white mt-6 border-b border-slate-850 pb-2">Verification & Accuracy</h2>
+        <h2 className="text-lg font-bold text-white mt-6 border-b border-slate-800 pb-2">Verification & Accuracy</h2>
         <p>
           While we make every effort to extract details accurately (dates, qualification levels, application fees) using advanced AI parser check systems, official guidelines are subject to changes. We do not warrant or guarantee the completeness or accuracy of any information presented on this site.
         </p>
@@ -47,7 +47,7 @@ export default function Disclaimer() {
           Candidates must read the official notification PDF and verify all guidelines from the recruiting authority's official portals before filling out any registration forms.
         </p>
 
-        <h2 className="text-lg font-bold text-white mt-6 border-b border-slate-850 pb-2">External Links</h2>
+        <h2 className="text-lg font-bold text-white mt-6 border-b border-slate-800 pb-2">External Links</h2>
         <p>
           Our website contains links to external websites that are not provided or maintained by or in any way affiliated with railwayadmitcard.online. Please note that we do not guarantee the accuracy, relevance, timeliness, or completeness of any information on these external websites.
         </p>
