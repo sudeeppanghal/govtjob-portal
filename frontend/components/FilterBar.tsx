@@ -89,7 +89,7 @@ export default function FilterBar({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Calculate active grid columns based on hidden filters
+  // Calculate active grid columns
   const getGridColsClass = () => {
     let count = 4;
     if (hideCategory) count--;
@@ -103,14 +103,10 @@ export default function FilterBar({
   return (
     <div 
       ref={containerRef}
-      className="relative bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 shadow-2xl backdrop-blur-md"
+      className="relative bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs"
     >
-      {/* Subtle glowing lines under the borders */}
-      <div className="absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
-      <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-indigo-500/10 to-transparent" />
-
-      <div className="flex items-center gap-2 mb-4 text-slate-200 font-bold text-sm uppercase tracking-wider">
-        <Filter className="h-4 w-4 text-emerald-400" />
+      <div className="flex items-center gap-2 mb-4 text-slate-800 font-bold text-sm uppercase tracking-wider">
+        <Filter className="h-4 w-4 text-blue-600" />
         Filter Notifications
       </div>
 
@@ -118,8 +114,8 @@ export default function FilterBar({
         {/* Category Filter */}
         {!hideCategory && (
           <div className="relative">
-            <label className="block text-xs text-slate-400 mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1">
-              <Tag className="h-3 w-3 text-slate-500" /> Category
+            <label className="block text-xs text-slate-500 mb-1.5 font-bold uppercase tracking-wider flex items-center gap-1">
+              <Tag className="h-3.5 w-3.5 text-slate-400" /> Category
             </label>
             <button
               onClick={() => {
@@ -128,13 +124,13 @@ export default function FilterBar({
                 setStateOpen(false);
                 setSectorOpen(false);
               }}
-              className={`w-full bg-slate-950/60 border ${catOpen ? "border-emerald-500/50 shadow-[0_0_12px_rgba(16,185,129,0.1)]" : "border-slate-800"} rounded-xl py-2.5 px-3.5 text-left text-sm text-slate-200 flex justify-between items-center hover:border-slate-700 hover:bg-slate-900/30 transition duration-250 cursor-pointer`}
+              className={`w-full bg-slate-50 border ${catOpen ? "border-blue-500/50 ring-1 ring-blue-500/10" : "border-slate-200"} rounded-xl py-2.5 px-3.5 text-left text-sm text-slate-700 flex justify-between items-center hover:border-slate-300 hover:bg-slate-100/50 transition duration-200 cursor-pointer`}
             >
               <span className="truncate">{selectedCategory || "All Categories"}</span>
-              <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform duration-200 ${catOpen ? "transform rotate-180 text-emerald-400" : ""}`} />
+              <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${catOpen ? "transform rotate-180 text-blue-600" : ""}`} />
             </button>
             {catOpen && (
-              <div className="absolute left-0 right-0 mt-2 bg-slate-950/95 border border-slate-800/90 rounded-xl shadow-2xl z-30 max-h-60 overflow-y-auto backdrop-blur-xl p-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="absolute left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-30 max-h-60 overflow-y-auto p-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat}
@@ -147,15 +143,15 @@ export default function FilterBar({
                       });
                       setCatOpen(false);
                     }}
-                    className={`w-full text-left py-2 px-3 rounded-lg hover:bg-slate-900 text-sm flex items-center justify-between transition cursor-pointer ${
+                    className={`w-full text-left py-2 px-3 rounded-lg hover:bg-slate-50 text-sm flex items-center justify-between transition cursor-pointer ${
                       (selectedCategory === cat || (cat === "All Categories" && !selectedCategory)) 
-                        ? "text-emerald-400 font-semibold bg-emerald-500/5" 
-                        : "text-slate-300"
+                        ? "text-blue-600 font-semibold bg-blue-50/50" 
+                        : "text-slate-700"
                     }`}
                   >
                     <span>{cat}</span>
                     {(selectedCategory === cat || (cat === "All Categories" && !selectedCategory)) && (
-                      <Check className="h-4 w-4 text-emerald-400" />
+                      <Check className="h-4 w-4 text-blue-600" />
                     )}
                   </button>
                 ))}
@@ -167,8 +163,8 @@ export default function FilterBar({
         {/* Sector Filter */}
         {!hideSector && (
           <div className="relative">
-            <label className="block text-xs text-slate-400 mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1">
-              <Briefcase className="h-3 w-3 text-slate-500" /> Job Sector
+            <label className="block text-xs text-slate-500 mb-1.5 font-bold uppercase tracking-wider flex items-center gap-1">
+              <Briefcase className="h-3.5 w-3.5 text-slate-400" /> Job Sector
             </label>
             <button
               onClick={() => {
@@ -177,13 +173,13 @@ export default function FilterBar({
                 setQualOpen(false);
                 setStateOpen(false);
               }}
-              className={`w-full bg-slate-950/60 border ${sectorOpen ? "border-emerald-500/50 shadow-[0_0_12px_rgba(16,185,129,0.1)]" : "border-slate-800"} rounded-xl py-2.5 px-3.5 text-left text-sm text-slate-200 flex justify-between items-center hover:border-slate-700 hover:bg-slate-900/30 transition duration-250 cursor-pointer`}
+              className={`w-full bg-slate-50 border ${sectorOpen ? "border-blue-500/50 ring-1 ring-blue-500/10" : "border-slate-200"} rounded-xl py-2.5 px-3.5 text-left text-sm text-slate-700 flex justify-between items-center hover:border-slate-300 hover:bg-slate-100/50 transition duration-200 cursor-pointer`}
             >
               <span className="truncate">{selectedSector || "All Sectors"}</span>
-              <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform duration-200 ${sectorOpen ? "transform rotate-180 text-emerald-400" : ""}`} />
+              <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${sectorOpen ? "transform rotate-180 text-blue-600" : ""}`} />
             </button>
             {sectorOpen && (
-              <div className="absolute left-0 right-0 mt-2 bg-slate-950/95 border border-slate-800/90 rounded-xl shadow-2xl z-30 max-h-60 overflow-y-auto backdrop-blur-xl p-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="absolute left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-30 max-h-60 overflow-y-auto p-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
                 {SECTORS.map((sec) => (
                   <button
                     key={sec}
@@ -196,15 +192,15 @@ export default function FilterBar({
                       });
                       setSectorOpen(false);
                     }}
-                    className={`w-full text-left py-2 px-3 rounded-lg hover:bg-slate-900 text-sm flex items-center justify-between transition cursor-pointer ${
+                    className={`w-full text-left py-2 px-3 rounded-lg hover:bg-slate-50 text-sm flex items-center justify-between transition cursor-pointer ${
                       (selectedSector === sec || (sec === "All Sectors" && !selectedSector)) 
-                        ? "text-emerald-400 font-semibold bg-emerald-500/5" 
-                        : "text-slate-300"
+                        ? "text-blue-600 font-semibold bg-blue-50/50" 
+                        : "text-slate-700"
                     }`}
                   >
                     <span>{sec}</span>
                     {(selectedSector === sec || (sec === "All Sectors" && !selectedSector)) && (
-                      <Check className="h-4 w-4 text-emerald-400" />
+                      <Check className="h-4 w-4 text-blue-600" />
                     )}
                   </button>
                 ))}
@@ -215,8 +211,8 @@ export default function FilterBar({
 
         {/* Qualification Filter */}
         <div className="relative">
-          <label className="block text-xs text-slate-400 mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1">
-            <GraduationCap className="h-3 w-3 text-slate-500" /> Education
+          <label className="block text-xs text-slate-500 mb-1.5 font-bold uppercase tracking-wider flex items-center gap-1">
+            <GraduationCap className="h-3.5 w-3.5 text-slate-400" /> Education
           </label>
           <button
             onClick={() => {
@@ -225,13 +221,13 @@ export default function FilterBar({
               setStateOpen(false);
               setSectorOpen(false);
             }}
-            className={`w-full bg-slate-950/60 border ${qualOpen ? "border-emerald-500/50 shadow-[0_0_12px_rgba(16,185,129,0.1)]" : "border-slate-800"} rounded-xl py-2.5 px-3.5 text-left text-sm text-slate-200 flex justify-between items-center hover:border-slate-700 hover:bg-slate-900/30 transition duration-250 cursor-pointer`}
+            className={`w-full bg-slate-50 border ${qualOpen ? "border-blue-500/50 ring-1 ring-blue-500/10" : "border-slate-200"} rounded-xl py-2.5 px-3.5 text-left text-sm text-slate-700 flex justify-between items-center hover:border-slate-300 hover:bg-slate-100/50 transition duration-200 cursor-pointer`}
           >
             <span className="truncate">{selectedQualification || "All Qualifications"}</span>
-            <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform duration-200 ${qualOpen ? "transform rotate-180 text-emerald-400" : ""}`} />
+            <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${qualOpen ? "transform rotate-180 text-blue-600" : ""}`} />
           </button>
           {qualOpen && (
-            <div className="absolute left-0 right-0 mt-2 bg-slate-950/95 border border-slate-800/90 rounded-xl shadow-2xl z-30 max-h-60 overflow-y-auto backdrop-blur-xl p-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
+            <div className="absolute left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-30 max-h-60 overflow-y-auto p-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
               {QUALIFICATIONS.map((qual) => (
                 <button
                   key={qual}
@@ -244,15 +240,15 @@ export default function FilterBar({
                     });
                     setQualOpen(false);
                   }}
-                  className={`w-full text-left py-2 px-3 rounded-lg hover:bg-slate-900 text-sm flex items-center justify-between transition cursor-pointer ${
+                  className={`w-full text-left py-2 px-3 rounded-lg hover:bg-slate-50 text-sm flex items-center justify-between transition cursor-pointer ${
                     (selectedQualification === qual || (qual === "All Qualifications" && !selectedQualification)) 
-                      ? "text-emerald-400 font-semibold bg-emerald-500/5" 
-                      : "text-slate-300"
+                      ? "text-blue-600 font-semibold bg-blue-50/50" 
+                      : "text-slate-700"
                   }`}
                 >
                   <span>{qual}</span>
                   {(selectedQualification === qual || (qual === "All Qualifications" && !selectedQualification)) && (
-                    <Check className="h-4 w-4 text-emerald-400" />
+                    <Check className="h-4 w-4 text-blue-600" />
                   )}
                 </button>
               ))}
@@ -262,8 +258,8 @@ export default function FilterBar({
 
         {/* State Filter */}
         <div className="relative">
-          <label className="block text-xs text-slate-400 mb-1.5 font-semibold uppercase tracking-wider flex items-center gap-1">
-            <MapPin className="h-3 w-3 text-slate-500" /> State / Region
+          <label className="block text-xs text-slate-500 mb-1.5 font-bold uppercase tracking-wider flex items-center gap-1">
+            <MapPin className="h-3.5 w-3.5 text-slate-400" /> State / Region
           </label>
           <button
             onClick={() => {
@@ -272,13 +268,13 @@ export default function FilterBar({
               setCatOpen(false);
               setSectorOpen(false);
             }}
-            className={`w-full bg-slate-950/60 border ${stateOpen ? "border-emerald-500/50 shadow-[0_0_12px_rgba(16,185,129,0.1)]" : "border-slate-800"} rounded-xl py-2.5 px-3.5 text-left text-sm text-slate-200 flex justify-between items-center hover:border-slate-700 hover:bg-slate-900/30 transition duration-250 cursor-pointer`}
+            className={`w-full bg-slate-50 border ${stateOpen ? "border-blue-500/50 ring-1 ring-blue-500/10" : "border-slate-200"} rounded-xl py-2.5 px-3.5 text-left text-sm text-slate-700 flex justify-between items-center hover:border-slate-300 hover:bg-slate-100/50 transition duration-200 cursor-pointer`}
           >
             <span className="truncate">{selectedState || "All States"}</span>
-            <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform duration-200 ${stateOpen ? "transform rotate-180 text-emerald-400" : ""}`} />
+            <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${stateOpen ? "transform rotate-180 text-blue-600" : ""}`} />
           </button>
           {stateOpen && (
-            <div className="absolute left-0 right-0 mt-2 bg-slate-950/95 border border-slate-800/90 rounded-xl shadow-2xl z-30 max-h-60 overflow-y-auto backdrop-blur-xl p-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
+            <div className="absolute left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-30 max-h-60 overflow-y-auto p-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
               {STATES.map((st) => (
                 <button
                   key={st}
@@ -291,15 +287,15 @@ export default function FilterBar({
                     });
                     setStateOpen(false);
                   }}
-                  className={`w-full text-left py-2 px-3 rounded-lg hover:bg-slate-900 text-sm flex items-center justify-between transition cursor-pointer ${
+                  className={`w-full text-left py-2 px-3 rounded-lg hover:bg-slate-50 text-sm flex items-center justify-between transition cursor-pointer ${
                     (selectedState === st || (st === "All States" && !selectedState)) 
-                      ? "text-emerald-400 font-semibold bg-emerald-500/5" 
-                      : "text-slate-300"
+                      ? "text-blue-600 font-semibold bg-blue-50/50" 
+                      : "text-slate-700"
                   }`}
                 >
                   <span>{st}</span>
                   {(selectedState === st || (st === "All States" && !selectedState)) && (
-                    <Check className="h-4 w-4 text-emerald-400" />
+                    <Check className="h-4 w-4 text-blue-600" />
                   )}
                 </button>
               ))}

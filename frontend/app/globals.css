@@ -1,20 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --background: #030712;
-  --foreground: #f8fafc;
-  --card-bg: rgba(17, 24, 39, 0.45);
-  --card-border: rgba(51, 65, 85, 0.5);
-  --glow-emerald: rgba(16, 185, 129, 0.05);
-  --glow-indigo: rgba(99, 102, 241, 0.05);
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --primary-accent: #2563eb;
+  --primary-accent-hover: #1d4ed8;
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
   background-image: 
-    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.03) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.03) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.03) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.02) 0px, transparent 50%);
   background-attachment: fixed;
 }
 
@@ -24,14 +24,14 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(3, 7, 18, 0.6);
+  background: rgba(241, 245, 249, 0.6);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.2);
+  background: rgba(148, 163, 184, 0.3);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(16, 185, 129, 0.4);
+  background: rgba(37, 99, 235, 0.5);
 }
 
 /* Micro-animations */
@@ -53,19 +53,19 @@ body {
   animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Glassmorphism card premium style */
+/* Glassmorphism card premium style (adapted for light theme) */
 .glass-card {
-  background: rgba(17, 24, 39, 0.45);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(51, 65, 85, 0.35);
+  border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 .glass-card:hover {
-  border-color: rgba(16, 185, 129, 0.25);
+  border-color: rgba(37, 99, 235, 0.3);
   box-shadow: 
-    0 10px 30px -10px rgba(0, 0, 0, 0.7),
-    0 0 20px -2px rgba(16, 185, 129, 0.02);
+    0 10px 30px -10px rgba(15, 23, 42, 0.08),
+    0 0 20px -2px rgba(37, 99, 235, 0.03);
 }
 
 /* Prose table customizations for parsed markdown notice tables */
@@ -77,17 +77,17 @@ body {
   font-size: 0.875rem;
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid rgba(51, 65, 85, 0.3);
+  border: 1px solid #e2e8f0;
 }
 
 .prose th {
-  background-color: rgba(30, 41, 59, 0.65);
-  color: #f8fafc;
-  font-weight: 600;
+  background-color: #f1f5f9;
+  color: #0f172a;
+  font-weight: 650;
   text-align: left;
   padding: 0.875rem 1.25rem;
-  border-bottom: 1px solid rgba(51, 65, 85, 0.4);
-  border-right: 1px solid rgba(51, 65, 85, 0.2);
+  border-bottom: 1.5px solid #cbd5e1;
+  border-right: 1px solid #e2e8f0;
 }
 
 .prose th:last-child {
@@ -96,10 +96,10 @@ body {
 
 .prose td {
   padding: 0.875rem 1.25rem;
-  border-bottom: 1px solid rgba(51, 65, 85, 0.2);
-  border-right: 1px solid rgba(51, 65, 85, 0.2);
-  color: #cbd5e1;
-  background-color: rgba(15, 23, 42, 0.2);
+  border-bottom: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
+  color: #334155;
+  background-color: #ffffff;
 }
 
 .prose td:last-child {
@@ -111,26 +111,25 @@ body {
 }
 
 .prose tr:nth-child(even) td {
-  background-color: rgba(30, 41, 59, 0.15);
+  background-color: #f8fafc;
 }
 
 .prose a {
-  color: #34d399;
+  color: #2563eb;
   text-decoration: none;
   font-weight: 600;
-  border-bottom: 1.5px dashed rgba(52, 211, 153, 0.4);
+  border-bottom: 1.5px dashed rgba(37, 99, 235, 0.4);
   transition: all 0.2s;
 }
 
 .prose a:hover {
-  color: #6ee7b7;
+  color: #1d4ed8;
   border-bottom-style: solid;
-  border-bottom-color: rgba(110, 231, 183, 1);
-  text-shadow: 0 0 8px rgba(110, 231, 183, 0.2);
+  border-bottom-color: #1d4ed8;
 }
 
 .prose h1, .prose h2, .prose h3 {
-  color: #f8fafc;
+  color: #0f172a;
   font-weight: 800;
   margin-top: 2rem;
   margin-bottom: 1rem;
@@ -143,7 +142,7 @@ body {
 
 .prose h2 {
   font-size: 1.4rem;
-  border-bottom: 1px solid rgba(51, 65, 85, 0.3);
+  border-bottom: 1px solid #e2e8f0;
   padding-bottom: 0.5rem;
 }
 
@@ -162,12 +161,12 @@ body {
 }
 
 .prose ul li::before {
-  content: "✦";
+  content: "•";
   position: absolute;
   left: 0;
-  color: #10b981;
-  font-size: 0.85em;
-  top: 0.1em;
+  color: #2563eb;
+  font-size: 1.2em;
+  top: -0.05em;
 }
 
 .prose ol {
@@ -180,10 +179,10 @@ body {
 }
 
 .prose blockquote {
-  border-left: 4px solid #10b981;
+  border-left: 4px solid #2563eb;
   padding: 0.75rem 1.25rem;
   margin: 1.5rem 0;
-  color: #cbd5e1;
-  background-color: rgba(16, 185, 129, 0.03);
+  color: #475569;
+  background-color: rgba(37, 99, 235, 0.03);
   border-radius: 0 12px 12px 0;
 }

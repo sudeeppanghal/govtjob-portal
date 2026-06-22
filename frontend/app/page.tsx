@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Landmark, Award, FileText, CheckCircle2, Search, Briefcase, FileSignature, ArrowRight, Activity } from "lucide-react";
+import { Train, Award, CheckCircle2, FileText, Briefcase, Send, Search, CheckCircle, ArrowRight, FileDown } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import NotificationCard from "../components/NotificationCard";
 import FilterBar from "../components/FilterBar";
@@ -25,7 +25,7 @@ export default async function Home({ searchParams }: PageProps) {
   const selectedSector = params.sector || "";
   const searchQuery = params.search || "";
 
-  // Perform search action if submitted via a simple HTML form
+  // Perform search action
   async function searchAction(formData: FormData) {
     "use server";
     const q = formData.get("q") as string;
@@ -55,106 +55,131 @@ export default async function Home({ searchParams }: PageProps) {
     query = query.ilike("article_title", `%${searchQuery}%`);
   }
 
-  // Limit notifications to latest 15 items for better page volume
-  const { data: notifications, error } = await query.limit(15);
+  // Fetch notifications
+  const { data: notifications, error } = await query.limit(12);
 
-  // Fetch count stats for dashboard counters (Jobs, Results, Admit Cards, Yojanas)
-  const { count: totalJobs } = await supabase
+  // Fetch latest 5 admit cards for the bottom list
+  const { data: recentAdmitCards } = await supabase
     .from("notifications")
-    .select("*", { count: "exact", head: true })
-    .eq("category", "Job")
-    .eq("status", "published");
-
-  const { count: totalResults } = await supabase
-    .from("notifications")
-    .select("*", { count: "exact", head: true })
-    .eq("category", "Result")
-    .eq("status", "published");
-
-  const { count: totalAdmitCards } = await supabase
-    .from("notifications")
-    .select("*", { count: "exact", head: true })
+    .select("article_title, slug, created_at")
+    .eq("status", "published")
     .eq("category", "Admit Card")
-    .eq("status", "published");
+    .order("created_at", { ascending: false })
+    .limit(5);
 
-  const { count: totalYojanas } = await supabase
-    .from("notifications")
-    .select("*", { count: "exact", head: true })
-    .eq("category", "Sarkari Yojana")
-    .eq("status", "published");
+  const categoryCards = [
+    { label: "Admit Card", desc: "Download Admit Card", href: "/admit-cards", icon: Train, color: "text-blue-600 bg-blue-50" },
+    { label: "Result", desc: "Check Exam Results", href: "/results", icon: Award, color: "text-emerald-600 bg-emerald-50" },
+    { label: "Answer Key", desc: "View Answer Keys", href: "/answer-keys", icon: CheckCircle2, color: "text-purple-600 bg-purple-50" },
+    { label: "Syllabus", desc: "Download Syllabus", href: "/jobs?search=syllabus", icon: FileText, color: "text-amber-600 bg-amber-50" },
+    { label: "Jobs", desc: "Latest Job Notifications", href: "/jobs", icon: Briefcase, color: "text-rose-600 bg-rose-50" },
+    { label: "Contact Us", desc: "Get in Touch", href: "/contact", icon: Send, color: "text-teal-600 bg-teal-50" }
+  ];
+
+  const trendingSearches = [
+    { label: "RRB NTPC Admit Card", query: "RRB NTPC" },
+    { label: "RRB Group D Result", query: "Group D" },
+    { label: "RRB ALP Admit Card", query: "RRB ALP" },
+    { label: "RRB JE Result", query: "RRB JE" },
+    { label: "RRB Technician", query: "Technician" }
+  ];
 
   return (
-    <div className="space-y-10 pb-20 bg-slate-950/20">
+    <div className="space-y-12 pb-20 bg-slate-50/50">
       <ViewTracker slug="homepage" />
       
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-24 px-4 text-center bg-gradient-to-b from-slate-950 via-[#070a13] to-[#030712] border-b border-slate-900/60">
-        {/* Glow Effects */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-emerald-500/10 rounded-full blur-[130px] pointer-events-none" />
-        <div className="absolute top-1/3 left-1/3 w-[350px] h-[180px] bg-indigo-500/10 rounded-full blur-[110px] pointer-events-none" />
-
-        <div className="max-w-4xl mx-auto space-y-6 relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 tracking-wide uppercase">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            Live Radar: Verified Government Notifications
-          </div>
+      <section className="relative overflow-hidden py-16 px-4 bg-gradient-to-b from-blue-50/40 via-white to-transparent border-b border-slate-200/50">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
           
-          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent leading-none">
-            Find Official Jobs & Yojana Notifications
-          </h1>
-          <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto font-medium">
-            Get instant, verified updates direct from state Gazettes, boards, and ministries. Our loop engines crawl and extract files every 1 minute.
-          </p>
+          {/* Hero Left Column */}
+          <div className="lg:col-span-7 space-y-6 text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 border border-blue-100 text-blue-600">
+              Welcome to Railway Admit Card
+            </div>
+            
+            <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-slate-900 leading-tight">
+              Get Latest Railway <span className="text-blue-600">Admit Cards, Results</span> & Job Updates
+            </h1>
+            
+            <p className="text-sm sm:text-base text-slate-500 max-w-xl leading-relaxed">
+              Find and download admit cards, results, answer keys and get latest updates for all Railway Recruitment Board (RRB) exams.
+            </p>
 
-          {/* Search Bar */}
-          <form action={searchAction} className="max-w-2xl mx-auto mt-8 flex gap-2">
-            <div className="relative flex-grow">
-              <Search className="absolute left-4 top-3.5 h-5 w-5 text-slate-500" />
-              <input
-                type="text"
-                name="q"
-                defaultValue={searchQuery}
-                placeholder="Search departments, boards, exam results (e.g. UPSC, SBI, State boards)..."
-                className="w-full bg-slate-900/40 border border-slate-800 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/25 rounded-xl py-3 pl-12 pr-4 text-slate-100 placeholder-slate-500 outline-none transition duration-200 shadow-2xl"
-              />
-            </div>
-            <button
-              type="submit"
-              className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold px-6 rounded-xl transition duration-200 shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20 hover:scale-[1.01] flex items-center gap-1 cursor-pointer"
-            >
-              Search
-            </button>
-          </form>
+            {/* Search Bar */}
+            <form action={searchAction} className="max-w-2xl mt-8 flex gap-2">
+              <div className="relative flex-grow shadow-sm">
+                <Search className="absolute left-4 top-3.5 h-4.5 w-4.5 text-slate-400" />
+                <input
+                  type="text"
+                  name="q"
+                  defaultValue={searchQuery}
+                  placeholder="Search Admit Card, Results, Jobs..."
+                  className="w-full bg-white border border-slate-200/90 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/25 rounded-2xl py-3 pl-12 pr-4 text-slate-800 placeholder-slate-400 outline-none transition"
+                />
+              </div>
+              <button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-7 rounded-2xl transition shadow-md shadow-blue-500/10 hover:shadow-blue-500/20 flex items-center gap-1 cursor-pointer"
+              >
+                Search
+              </button>
+            </form>
 
-          {/* Stats Bar */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mt-12 pt-8 border-t border-slate-900/60">
-            <div className="p-4 bg-slate-900/20 rounded-xl border border-slate-800/60 hover:border-slate-800 hover:scale-[1.02] transition duration-200">
-              <span className="block text-3xl font-extrabold text-emerald-400">{totalJobs || 0}</span>
-              <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">Active Jobs</span>
+            {/* Trending Searches */}
+            <div className="flex flex-wrap items-center gap-2 mt-4 pt-1">
+              <span className="text-xs text-slate-400 font-semibold">Trending Searches:</span>
+              {trendingSearches.map((search, idx) => (
+                <Link
+                  key={idx}
+                  href={`/?search=${encodeURIComponent(search.query)}`}
+                  className="px-3 py-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 rounded-lg text-xs font-semibold shadow-xs transition"
+                >
+                  {search.label}
+                </Link>
+              ))}
             </div>
-            <div className="p-4 bg-slate-900/20 rounded-xl border border-slate-800/60 hover:border-slate-800 hover:scale-[1.02] transition duration-200">
-              <span className="block text-3xl font-extrabold text-indigo-400">{totalResults || 0}</span>
-              <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">Exam Results</span>
-            </div>
-            <div className="p-4 bg-slate-900/20 rounded-xl border border-slate-800/60 hover:border-slate-800 hover:scale-[1.02] transition duration-200">
-              <span className="block text-3xl font-extrabold text-amber-400">{totalAdmitCards || 0}</span>
-              <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">Admit Cards</span>
-            </div>
-            <div className="p-4 bg-slate-900/20 rounded-xl border border-slate-800/60 hover:border-slate-800 hover:scale-[1.02] transition duration-200">
-              <span className="block text-3xl font-extrabold text-pink-400">{totalYojanas || 0}</span>
-              <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">Govt Yojana</span>
-            </div>
+          </div>
+
+          {/* Hero Right Column (Sleek Train Image) */}
+          <div className="lg:col-span-5 flex justify-center">
+            <img
+              src="/train_hero.png"
+              alt="Railway Train"
+              className="rounded-3xl shadow-xl border border-slate-200/50 hover:scale-[1.01] transition duration-300 w-full max-w-md lg:max-w-full"
+            />
           </div>
         </div>
       </section>
 
-      {/* Main Content (Filters + Results) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      {/* Main Container */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         
-        {/* Full width filter bar for size flexibility and visibility */}
+        {/* Category Navigation Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {categoryCards.map((card, idx) => {
+            const Icon = card.icon;
+            return (
+              <Link
+                key={idx}
+                href={card.href}
+                className="group bg-white border border-slate-200/80 rounded-2xl p-4.5 text-center flex flex-col items-center justify-center hover:border-blue-200 hover:shadow-md transition duration-350"
+              >
+                <div className={`p-3 rounded-2xl ${card.color} group-hover:scale-110 transition duration-300`}>
+                  <Icon className="h-5.5 w-5.5" />
+                </div>
+                <h3 className="text-sm font-bold text-slate-800 mt-3 group-hover:text-blue-600 transition">
+                  {card.label}
+                </h3>
+                <span className="text-[11px] text-slate-400 mt-1">
+                  {card.desc}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Filter bar (neatly positioned just above latest updates grid) */}
         <FilterBar
           selectedQualification={selectedQual}
           selectedState={selectedState}
@@ -173,98 +198,119 @@ export default async function Home({ searchParams }: PageProps) {
           }}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Left Column (Quick links and status info card) */}
-          <div className="lg:col-span-1 space-y-6">
-            <div className="sticky top-20 space-y-6">
-              {/* Quick Shortcuts */}
-              <div className="bg-slate-900/20 border border-slate-800/80 rounded-2xl p-5 space-y-4 backdrop-blur-md">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 border-b border-slate-800/60 pb-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                  Quick Shortcuts
-                </h3>
-                <div className="flex flex-col gap-2 text-sm text-slate-300">
-                  <Link href="/jobs" className="hover:text-emerald-400 hover:translate-x-1.5 flex justify-between items-center group transition duration-200 py-2 border-b border-slate-800/20">
-                    Latest Jobs <ArrowRight className="h-4 w-4 text-slate-650 group-hover:text-emerald-400 transition" />
-                  </Link>
-                  <Link href="/yojana" className="hover:text-pink-400 hover:translate-x-1.5 flex justify-between items-center group transition duration-200 py-2 border-b border-slate-800/20">
-                    Sarkari Yojana <ArrowRight className="h-4 w-4 text-slate-650 group-hover:text-pink-400 transition" />
-                  </Link>
-                  <Link href="/results" className="hover:text-indigo-400 hover:translate-x-1.5 flex justify-between items-center group transition duration-200 py-2 border-b border-slate-800/20">
-                    Latest Results <ArrowRight className="h-4 w-4 text-slate-650 group-hover:text-indigo-400 transition" />
-                  </Link>
-                  <Link href="/admit-cards" className="hover:text-amber-400 hover:translate-x-1.5 flex justify-between items-center group transition duration-200 py-2 border-b border-slate-800/20">
-                    Admit Cards <ArrowRight className="h-4 w-4 text-slate-650 group-hover:text-amber-400 transition" />
-                  </Link>
-                  <Link href="/answer-keys" className="hover:text-purple-400 hover:translate-x-1.5 flex justify-between items-center group transition duration-200 py-2">
-                    Answer Keys <ArrowRight className="h-4 w-4 text-slate-650 group-hover:text-purple-400 transition" />
-                  </Link>
-                </div>
-              </div>
-
-              {/* Informative Disclaimer Widget */}
-              <div className="bg-slate-900/15 border border-slate-800/55 rounded-2xl p-5 space-y-3.5 backdrop-blur-md">
-                <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
-                  <Activity className="h-4 w-4 text-emerald-400 animate-pulse" />
-                  Live Daemon Info
-                </div>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Our system crawls RSS aggregators and schedules LLM key rotation to extract verified data automatically every minute.
-                </p>
-                <div className="text-[10px] bg-slate-950 border border-slate-800/80 rounded-lg p-2.5 text-slate-500 font-semibold flex items-center justify-between">
-                  <span>📡 Active Node</span>
-                  <span className="text-emerald-400 font-bold uppercase tracking-widest text-[9px]">100% ONLINE</span>
-                </div>
-              </div>
-            </div>
+        {/* Latest Updates Section */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
+              {searchQuery ? `Search Results for "${searchQuery}"` : "Latest Updates"}
+            </h2>
+            <Link href="/jobs" className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+              <span>View All Updates</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
           </div>
 
-          {/* Right Column (Results) */}
-          <div className="lg:col-span-3 space-y-6">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-900/60">
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-slate-100">
-                  {searchQuery ? `Search Results for "${searchQuery}"` : "Latest Official Feeds"}
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Updated from employment bulletins.
-                </p>
-              </div>
-              <span className="text-xs bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg text-slate-400 font-bold">
-                {notifications ? notifications.length : 0} items displayed
-              </span>
+          {error && (
+            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
+              Failed to load notifications from database. Check configuration.
             </div>
+          )}
 
-            {error && (
-              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
-                Failed to load notifications from database. Check configuration.
-              </div>
-            )}
-
-            {notifications && notifications.length === 0 ? (
-              <div className="text-center py-20 bg-slate-900/5 border border-dashed border-slate-800 rounded-xl p-8">
-                <FileSignature className="h-12 w-12 text-slate-700 mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-slate-300">No Notifications Found</h3>
-                <p className="text-sm text-slate-500 max-w-md mx-auto mt-2">
-                  We couldn't find any active notifications matching your search or filters. Try resetting the filters or broadening your terms.
-                </p>
-                <Link
-                  href="/"
-                  className="inline-block mt-6 px-6 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 text-sm font-semibold rounded-lg transition"
-                >
-                  Clear Filters
-                </Link>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-4">
-                {notifications &&
-                  notifications.map((item: any) => (
-                    <NotificationCard key={item.id} notification={item} />
-                  ))}
-              </div>
-            )}
-          </div>
+          {notifications && notifications.length === 0 ? (
+            <div className="text-center py-20 bg-white border border-dashed border-slate-200 rounded-2xl p-8">
+              <Train className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+              <h3 className="text-base font-bold text-slate-700">No Updates Found</h3>
+              <p className="text-xs text-slate-400 max-w-md mx-auto mt-2">
+                We couldn't find any active notifications matching your search or filters. Try resetting the filters or broadening your terms.
+              </p>
+              <Link
+                href="/"
+                className="inline-block mt-5 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow-xs"
+              >
+                Clear Filters
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {notifications &&
+                notifications.map((item: any) => (
+                  <NotificationCard key={item.id} notification={item} />
+                ))}
+            </div>
+          )}
         </div>
+
+        {/* Bottom Section (About + Recent Admit Cards list) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-4">
+          
+          {/* Column 1: About Railway Admit Card (7 cols) */}
+          <div className="lg:col-span-7 bg-white border border-slate-200/80 rounded-2xl p-6 space-y-5 shadow-xs">
+            <div className="flex items-center gap-2.5 pb-3.5 border-b border-slate-100">
+              <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+                <Train className="h-4.5 w-4.5" />
+              </div>
+              <h3 className="text-[15px] font-extrabold text-slate-900 uppercase tracking-wider">
+                About Railway Admit Card
+              </h3>
+            </div>
+            
+            <p className="text-sm text-slate-500 leading-relaxed">
+              RailwayAdmitCard.online is your one-stop destination for all Railway Recruitment Board (RRB) updates. Get the latest admit cards, results, answer keys, syllabus, and job notifications all in one place. We crawl official portals 24/7 to deliver reliable, spam-free data.
+            </p>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              {[
+                "Fast Updates",
+                "Accurate Information",
+                "Easy Downloads",
+                "100% Free"
+              ].map((feature, i) => (
+                <div key={i} className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                  <CheckCircle className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                  <span>{feature}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Column 2: Recent Admit Cards (5 cols) */}
+          <div className="lg:col-span-5 bg-white border border-slate-200/80 rounded-2xl p-6 space-y-4 shadow-xs">
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
+              <h3 className="text-[15px] font-extrabold text-slate-900 uppercase tracking-wider">
+                Recent Admit Cards
+              </h3>
+              <Link href="/admit-cards" className="text-xs font-bold text-blue-600 hover:text-blue-700">
+                View All
+              </Link>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              {recentAdmitCards && recentAdmitCards.length > 0 ? (
+                recentAdmitCards.map((card: any, idx) => (
+                  <Link
+                    key={idx}
+                    href={`/jobs/${card.slug}`}
+                    className="flex items-center justify-between gap-3 text-xs group py-1.5 hover:text-blue-600 transition"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileDown className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                      <span className="font-semibold text-slate-700 group-hover:text-blue-600 transition truncate">
+                        {card.article_title}
+                      </span>
+                    </div>
+                    <span className="flex-shrink-0 text-[10px] bg-slate-100 text-slate-500 font-semibold px-2 py-0.5 rounded uppercase tracking-wider">
+                      {new Date(card.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}
+                    </span>
+                  </Link>
+                ))
+              ) : (
+                <span className="text-xs text-slate-400 py-4 text-center">No recent admit cards found.</span>
+              )}
+            </div>
+          </div>
+
+        </div>
+
       </section>
     </div>
   );

@@ -24,8 +24,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} h-full dark`}>
-      <body className="font-sans min-h-full flex flex-col bg-[#090d16] text-slate-100 antialiased selection:bg-emerald-500/30 selection:text-emerald-200">
+    <html lang="en" className={`${inter.variable} h-full`}>
+      <body className="font-sans min-h-full flex flex-col bg-slate-50 text-slate-900 antialiased selection:bg-blue-500/20 selection:text-blue-800">
         <Navbar />
         <main className="flex-grow">{children}</main>
         <Footer />
