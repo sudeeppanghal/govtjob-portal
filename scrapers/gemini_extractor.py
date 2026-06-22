@@ -173,9 +173,12 @@ def extract_with_gemini(pdf_text: str, category: str, source_name: str) -> dict:
 
     # 1. Try Gemini with key rotation
     if GEMINI_API_KEYS:
-        for idx, api_key in enumerate(GEMINI_API_KEYS):
+        import random
+        shuffled_keys = list(GEMINI_API_KEYS)
+        random.shuffle(shuffled_keys)
+        for idx, api_key in enumerate(shuffled_keys):
             try:
-                print(f"Attempting Gemini extraction using key #{idx+1}...")
+                print(f"Attempting Gemini extraction using shuffled key #{idx+1}...")
                 genai.configure(api_key=api_key)
                 model = genai.GenerativeModel(
                     model_name="gemini-2.5-flash",
