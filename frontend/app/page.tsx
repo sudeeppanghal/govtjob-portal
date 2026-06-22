@@ -4,7 +4,7 @@ import { supabase } from "../lib/supabase";
 import NotificationCard from "../components/NotificationCard";
 import FilterBar from "../components/FilterBar";
 import { redirect } from "next/navigation";
-import { trackPageView } from "../lib/analytics";
+import ViewTracker from "../components/ViewTracker";
 
 // Define interface for Page props
 interface PageProps {
@@ -23,8 +23,7 @@ export default async function Home({ searchParams }: PageProps) {
   const selectedCat = params.category || "";
   const searchQuery = params.search || "";
 
-  // Log page view asynchronously (non-blocking)
-  trackPageView("homepage").catch(e => console.error("Analytics log error:", e));
+
 
   // Perform search action if submitted via a simple HTML form
   async function searchAction(formData: FormData) {
@@ -86,6 +85,7 @@ export default async function Home({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-12 pb-16">
+      <ViewTracker slug="homepage" />
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 px-4 text-center bg-gradient-to-b from-[#0f172a]/50 via-[#090d16] to-[#090d16] border-b border-slate-900">
         {/* Glow Effects */}

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Calendar, GraduationCap, MapPin, Landmark, ArrowLeft, Share2, Printer, CheckCircle, RefreshCw } from "lucide-react";
 import { supabase } from "../../../lib/supabase";
 import { marked } from "marked";
-import { trackPageView } from "../../../lib/analytics";
+import ViewTracker from "../../../components/ViewTracker";
 
 interface DetailProps {
   params: Promise<{
@@ -38,8 +38,7 @@ export async function generateMetadata({ params }: DetailProps) {
 export default async function YojanaDetail({ params }: DetailProps) {
   const { slug } = await params;
 
-  // Log page view asynchronously (non-blocking)
-  trackPageView(slug).catch(e => console.error("Analytics log error:", e));
+
 
   // Fetch article detail
   const { data: notification, error } = await supabase
@@ -80,6 +79,7 @@ export default async function YojanaDetail({ params }: DetailProps) {
 
   return (
     <article className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <ViewTracker slug={slug} />
       {/* Schemas Injection */}
       {schemas && (
         <>
