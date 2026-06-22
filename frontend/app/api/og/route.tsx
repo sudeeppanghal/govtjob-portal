@@ -80,6 +80,7 @@ export async function GET(request: NextRequest) {
           >
             <div
               style={{
+                display: "flex",
                 fontSize: "38px",
                 fontWeight: "900",
                 color: "#1e3a8a",
@@ -87,7 +88,7 @@ export async function GET(request: NextRequest) {
                 letterSpacing: "1px"
               }}
             >
-              {source} RECRUITMENT
+              {`${source} RECRUITMENT`}
             </div>
             <div
               style={{
@@ -224,7 +225,7 @@ export async function GET(request: NextRequest) {
                     color: color
                   }}
                 >
-                  🎓 {qual}
+                  {`🎓 ${qual}`}
                 </div>
               );
             })}
