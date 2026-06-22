@@ -95,3 +95,46 @@ export async function triggerCrawlAction() {
     console.error("Error triggering remote workflow:", err);
   }
 }
+
+/**
+ * Server Action: Authenticates admin credentials purely on the server side
+ */
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+
+export async function loginAction(formData: FormData) {
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+
+  const expectedEmail = process.env.ADMIN_EMAIL;
+  const expectedPassword = process.env.ADMIN_PASSWORD;
+
+  if (!expectedEmail || !expectedPassword) {
+    console.error("Admin credentials not configured in environment variables!");
+    redirect("/admin?error=not-configured");
+  }
+
+  if (email === expectedEmail && password === expectedPassword) {
+    const cookieStore = await cookies();
+    cookieStore.set("admin_session", "authenticated", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: "/"
+    });
+    redirect("/admin");
+  } else {
+    redirect("/admin?error=invalid");
+  }
+}
+
+/**
+ * Server Action: Destroys the admin authentication cookie
+ */
+export async function logoutAction() {
+  const cookieStore = await cookies();
+  cookieStore.delete("admin_session");
+  redirect("/admin");
+}
+

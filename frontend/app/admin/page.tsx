@@ -1,11 +1,85 @@
 import { supabase } from "../../lib/supabase";
-import { triggerCrawlAction, updateStatusAction } from "./actions";
+import { triggerCrawlAction, updateStatusAction, loginAction, logoutAction } from "./actions";
 import { Landmark, ShieldAlert, Terminal, Play, CheckCircle, XCircle, FileSignature, RefreshCw, BarChart2, Eye, Users, FileText } from "lucide-react";
 import Link from "next/link";
+import { cookies } from "next/headers";
 
 export const revalidate = 0; // Fetch fresh data on every visit
 
-export default async function AdminDashboard() {
+interface AdminProps {
+  searchParams: Promise<{
+    error?: string;
+  }>;
+}
+
+export default async function AdminDashboard({ searchParams }: AdminProps) {
+  const params = await searchParams;
+  const errorParam = params.error || "";
+
+  const cookieStore = await cookies();
+  const isAuthenticated = cookieStore.get("admin_session")?.value === "authenticated";
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center px-4 py-16">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[200px] bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none" />
+        
+        <div className="w-full max-w-md bg-[#111827]/40 border border-slate-850 rounded-2xl p-8 space-y-6 shadow-2xl relative z-10 backdrop-blur-xl">
+          <div className="text-center space-y-2">
+            <h1 className="text-2xl font-extrabold tracking-tight text-white flex items-center justify-center gap-2">
+              <Landmark className="h-6 w-6 text-emerald-400" /> Admin Console Login
+            </h1>
+            <p className="text-xs text-slate-500">
+              Authorized personnel only. Please sign in to access CMS & Analytics.
+            </p>
+          </div>
+
+          {errorParam === "invalid" && (
+            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs flex items-center gap-2">
+              <XCircle className="h-4 w-4 shrink-0" /> Invalid email address or password.
+            </div>
+          )}
+
+          {errorParam === "not-configured" && (
+            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-400 text-xs flex items-center gap-2">
+              <ShieldAlert className="h-4 w-4 shrink-0" /> Credentials not configured. Please set ADMIN_EMAIL and ADMIN_PASSWORD in environment variables.
+            </div>
+          )}
+
+          <form action={loginAction} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-400 block">Email Address</label>
+              <input
+                type="email"
+                name="email"
+                required
+                placeholder="admin@example.com"
+                className="w-full bg-slate-900 border border-slate-800 focus:border-emerald-500 rounded-lg py-2.5 px-3.5 text-sm text-slate-100 placeholder-slate-650 outline-none transition"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-400 block">Password</label>
+              <input
+                type="password"
+                name="password"
+                required
+                placeholder="••••••••"
+                className="w-full bg-slate-900 border border-slate-800 focus:border-emerald-500 rounded-lg py-2.5 px-3.5 text-sm text-slate-100 placeholder-slate-650 outline-none transition"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-2.5 mt-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-semibold rounded-lg text-sm transition shadow-lg shadow-emerald-500/10 cursor-pointer text-center"
+            >
+              Sign In
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
   // 1. Query Crawls Statistics from Supabase
   const { data: crawls } = await supabase
     .from("crawls")
@@ -87,15 +161,26 @@ export default async function AdminDashboard() {
           </p>
         </div>
         
-        {/* Trigger Action Form */}
-        <form action={triggerCrawlAction}>
-          <button
-            type="submit"
-            className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-semibold rounded-lg text-sm transition shadow-lg shadow-emerald-500/10 flex items-center gap-2 cursor-pointer"
-          >
-            <Play className="h-4 w-4 fill-current" /> Trigger Manual Crawl
-          </button>
-        </form>
+        {/* Sign Out & Trigger Manual Crawl */}
+        <div className="flex items-center gap-3">
+          <form action={logoutAction}>
+            <button
+              type="submit"
+              className="px-4 py-2.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-350 hover:text-slate-200 font-semibold rounded-lg text-sm transition flex items-center gap-2 cursor-pointer"
+            >
+              Sign Out
+            </button>
+          </form>
+          
+          <form action={triggerCrawlAction}>
+            <button
+              type="submit"
+              className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-semibold rounded-lg text-sm transition shadow-lg shadow-emerald-500/10 flex items-center gap-2 cursor-pointer"
+            >
+              <Play className="h-4 w-4 fill-current" /> Trigger Manual Crawl
+            </button>
+          </form>
+        </div>
       </div>
 
       {/* Stats Cards */}
