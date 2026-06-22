@@ -4,6 +4,7 @@ import { Calendar, GraduationCap, MapPin, Landmark, ArrowLeft, Share2, Printer, 
 import { supabase } from "../../../lib/supabase";
 import { marked } from "marked";
 import ViewTracker from "../../../components/ViewTracker";
+import PrintButton from "../../../components/PrintButton";
 
 interface DetailProps {
   params: Promise<{
@@ -203,9 +204,7 @@ export default async function YojanaDetail({ params }: DetailProps) {
               <button className="flex items-center gap-1 hover:text-white transition">
                 <Share2 className="h-4.5 w-4.5" /> Share Scheme
               </button>
-              <button onClick={() => window.print()} className="flex items-center gap-1 hover:text-white transition cursor-pointer">
-                <Printer className="h-4.5 w-4.5" /> Print Details
-              </button>
+              <PrintButton label="Print Details" />
             </div>
           </div>
 
