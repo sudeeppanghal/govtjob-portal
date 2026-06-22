@@ -33,6 +33,59 @@ def extract_html_text(url: str) -> str:
     text = '\n'.join(chunk for chunk in chunks if chunk)
     return text[:20000] # Limit to 20k chars for HTML pages
 
+def determine_sector(source_name: str, title: str, content: str, states: list) -> str:
+    """Helper to classify a job notification into a specific sector."""
+    source_lower = source_name.lower()
+    title_lower = title.lower()
+    content_lower = content.lower()
+    
+    # 1. Banking
+    if any(x in source_lower for x in ["ibps", "sbi", "careers"]) or "bank" in title_lower or "bank" in content_lower:
+        return "Banking"
+        
+    # 2. UPSC
+    if "upsc" in source_lower or "union public service" in title_lower or "union public service" in content_lower:
+        return "UPSC"
+        
+    # 3. SSC
+    if "ssc" in source_lower or "staff selection" in title_lower or "staff selection" in content_lower:
+        return "SSC"
+        
+    # 4. Railway
+    if "rrb" in source_lower or "railway" in title_lower or "railway" in content_lower or "rrc" in title_lower:
+        return "Railway"
+        
+    # 5. Defense / Police
+    defense_keywords = [
+        "police", "constable", "sub inspector", "sub-inspector", "inspector", "army", "navy", "air force", 
+        "nda", "cds", "bsf", "crpf", "itbp", "cisf", "ssb", "guard", "rifleman", "jawan", "lieutenant", 
+        "defense", "defence", "military", "airforce", "commando", "soldier"
+    ]
+    if any(kw in title_lower for kw in defense_keywords) or any(kw in content_lower for kw in defense_keywords):
+        return "Defense / Police"
+        
+    # 6. Teaching
+    teaching_keywords = [
+        "teacher", "lecturer", "teaching", "professor", "tgt", "pgt", "prt", "tet", "ctet", "principal", "b.ed", "school"
+    ]
+    if any(kw in title_lower for kw in teaching_keywords) or any(kw in content_lower for kw in teaching_keywords):
+        return "Teaching"
+        
+    # 7. State Jobs
+    if states and len(states) > 0 and not any(s.lower() in ["national", "central"] for s in states):
+        return "State Jobs"
+        
+    state_names = [
+        "andhra pradesh", "arunachal pradesh", "assam", "bihar", "chhattisgarh", "goa", "gujarat", "haryana", 
+        "himachal pradesh", "jharkhand", "karnataka", "kerala", "madhya pradesh", "maharashtra", "manipur", 
+        "meghalaya", "mizoram", "nagaland", "odisha", "punjab", "rajasthan", "sikkim", "tamil nadu", "telangana", 
+        "tripura", "uttar pradesh", "uttarakhand", "west bengal", "delhi", "chandigarh", "jammu", "kashmir", "ladakh"
+    ]
+    if any(st in title_lower for st in state_names) or any(st in content_lower for st in state_names):
+        return "State Jobs"
+        
+    return "Others"
+
 def process_single_notice(notice: dict) -> tuple:
     """Processes a single scraped notice. Returns (success_bool, ai_used_bool)"""
     url = notice['url']
@@ -82,6 +135,14 @@ def process_single_notice(notice: dict) -> tuple:
         # Run Auto-Siloing Internal Linker on article markdown
         linked_content = inject_internal_links(data['article_content'])
         
+        # Determine sector
+        sector = determine_sector(
+            source_name=source,
+            title=data['article_title'],
+            content=data['article_content'],
+            states=data.get('states', [])
+        )
+        
         insert_data = {
             "source_name": source,
             "source_url": url,
@@ -98,7 +159,8 @@ def process_single_notice(notice: dict) -> tuple:
             "qualifications": data['qualifications'],
             "states": data['states'],
             "image_url": image_url,
-            "is_updated": False
+            "is_updated": False,
+            "sector": sector
         }
         
         supabase.table("notifications").insert(insert_data).execute()

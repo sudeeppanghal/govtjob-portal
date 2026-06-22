@@ -9,6 +9,7 @@ interface PageProps {
   searchParams: Promise<{
     qualification?: string;
     state?: string;
+    sector?: string;
     search?: string;
   }>;
 }
@@ -17,6 +18,7 @@ export default async function JobsFeed({ searchParams }: PageProps) {
   const params = await searchParams;
   const selectedQual = params.qualification || "";
   const selectedState = params.state || "";
+  const selectedSector = params.sector || "";
   const searchQuery = params.search || "";
 
   let query = supabase
@@ -25,6 +27,10 @@ export default async function JobsFeed({ searchParams }: PageProps) {
     .eq("category", "Job")
     .eq("status", "published")
     .order("created_at", { ascending: false });
+
+  if (selectedSector) {
+    query = query.eq("sector", selectedSector);
+  }
 
   if (selectedQual) {
     query = query.contains("qualifications", [selectedQual]);
@@ -53,11 +59,13 @@ export default async function JobsFeed({ searchParams }: PageProps) {
         selectedQualification={selectedQual}
         selectedState={selectedState}
         selectedCategory="Job"
+        selectedSector={selectedSector}
         onFilterChange={async (filters) => {
           "use server";
           const queryParams = new URLSearchParams();
           if (filters.qualification) queryParams.set("qualification", filters.qualification);
           if (filters.state) queryParams.set("state", filters.state);
+          if (filters.sector) queryParams.set("sector", filters.sector);
           if (searchQuery) queryParams.set("search", searchQuery);
           
           redirect(`/jobs?${queryParams.toString()}`);

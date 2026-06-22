@@ -13,6 +13,7 @@ interface Notification {
   states: string[];
   is_updated: boolean;
   created_at: string;
+  sector?: string;
 }
 
 interface NotificationCardProps {
@@ -28,7 +29,8 @@ export default function NotificationCard({ notification }: NotificationCardProps
     last_date,
     qualifications,
     states,
-    is_updated
+    is_updated,
+    sector
   } = notification;
 
   // Determine category badge colors
@@ -69,6 +71,12 @@ export default function NotificationCard({ notification }: NotificationCardProps
           <span className={`text-xs font-semibold px-2.5 py-0.5 border rounded-full ${getCategoryStyles(category)}`}>
             {category}
           </span>
+          {/* Sector Badge */}
+          {sector && sector !== "Others" && (
+            <span className="text-xs bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2.5 py-0.5 rounded-full font-semibold">
+              {sector}
+            </span>
+          )}
           {/* Source Tag */}
           <span className="text-xs bg-slate-900 border border-slate-800 text-slate-400 px-2 py-0.5 rounded-md font-medium">
             {source_name}

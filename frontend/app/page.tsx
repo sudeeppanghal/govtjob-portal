@@ -12,6 +12,7 @@ interface PageProps {
     qualification?: string;
     state?: string;
     category?: string;
+    sector?: string;
     search?: string;
   }>;
 }
@@ -21,6 +22,7 @@ export default async function Home({ searchParams }: PageProps) {
   const selectedQual = params.qualification || "";
   const selectedState = params.state || "";
   const selectedCat = params.category || "";
+  const selectedSector = params.sector || "";
   const searchQuery = params.search || "";
 
 
@@ -47,6 +49,9 @@ export default async function Home({ searchParams }: PageProps) {
   }
   if (selectedState) {
     query = query.contains("states", [selectedState]);
+  }
+  if (selectedSector) {
+    query = query.eq("sector", selectedSector);
   }
   if (searchQuery) {
     // If Postgres full-text search is set up:
@@ -160,6 +165,7 @@ export default async function Home({ searchParams }: PageProps) {
                 selectedQualification={selectedQual}
                 selectedState={selectedState}
                 selectedCategory={selectedCat}
+                selectedSector={selectedSector}
                 onFilterChange={async (filters) => {
                   "use server";
                   // Construct parameters
@@ -167,6 +173,7 @@ export default async function Home({ searchParams }: PageProps) {
                   if (filters.qualification) queryParams.set("qualification", filters.qualification);
                   if (filters.state) queryParams.set("state", filters.state);
                   if (filters.category) queryParams.set("category", filters.category);
+                  if (filters.sector) queryParams.set("sector", filters.sector);
                   if (searchQuery) queryParams.set("search", searchQuery);
                   
                   redirect(`/?${queryParams.toString()}`);

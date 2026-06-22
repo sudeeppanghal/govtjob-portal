@@ -1,7 +1,9 @@
 import json
 import re
+import os
+import requests
 import google.generativeai as genai
-from scrapers.config import GEMINI_API_KEY
+from scrapers.config import GEMINI_API_KEYS
 
 def clean_slug(slug_str: str) -> str:
     """Cleans a string to make it a valid URL slug."""
@@ -52,15 +54,58 @@ def clean_json_text(text: str) -> str:
             
     return "".join(fixed_chars)
 
-def extract_with_gemini(pdf_text: str, category: str, source_name: str) -> dict:
-    """Uses Gemini API to extract details from notice text and generate SEO-optimized article.
-    Returns a dict containing article title, content, SEO metadata, and schemas.
-    Returns None if the call fails or quota is exceeded.
-    """
-    if not GEMINI_API_KEY:
-        print("Gemini API key is not configured. Skipping AI extraction.")
+def extract_with_groq(prompt: str, system_instruction: str) -> dict:
+    """Uses Groq API as a fallback to extract details and generate content in JSON format."""
+    groq_key = os.getenv("GROQ_API_KEY")
+    if not groq_key:
+        print("Groq API key is not configured. Skipping Groq fallback.")
         return None
 
+    # Try models sequentially
+    models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"]
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {groq_key}",
+        "Content-Type": "application/json"
+    }
+
+    for model in models:
+        try:
+            print(f"Attempting Groq extraction using model: {model}...")
+            payload = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": system_instruction},
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": 0.2,
+                "max_tokens": 4096,
+                "response_format": {"type": "json_object"}
+            }
+            # Timeout in 35 seconds
+            response = requests.post(url, headers=headers, json=payload, timeout=35)
+            if response.status_code == 200:
+                res_data = response.json()
+                content = res_data['choices'][0]['message']['content']
+                cleaned_text = clean_json_text(content)
+                result_json = json.loads(cleaned_text, strict=False)
+                
+                # Verify structure
+                if 'article_title' in result_json and 'article_content' in result_json:
+                    print(f"Groq extraction successful with model {model}.")
+                    result_json['slug'] = clean_slug(result_json.get('slug', result_json['article_title']))
+                    return result_json
+                else:
+                    print(f"Groq model {model} returned JSON, but it is missing critical fields.")
+            else:
+                print(f"Groq API {model} failed with status {response.status_code}: {response.text}")
+        except Exception as e:
+            print(f"Groq API model {model} execution failed: {e}")
+
+    return None
+
+def extract_with_gemini(pdf_text: str, category: str, source_name: str) -> dict:
+    """Uses Gemini API with key rotation, falling back to Groq Llama 3 if needed."""
     # Define model configurations
     generation_config = {
         "temperature": 0.2,
@@ -126,25 +171,37 @@ def extract_with_gemini(pdf_text: str, category: str, source_name: str) -> dict:
         f"Notification Text:\n{pdf_text[:40000]}" # Limit to first 40,000 chars to save token limits
     )
 
-    try:
-        model = genai.GenerativeModel(
-            model_name="gemini-2.5-flash",
-            generation_config=generation_config,
-            system_instruction=system_instruction
-        )
-        
-        response = model.generate_content(prompt)
-        cleaned_text = clean_json_text(response.text)
-        result_json = json.loads(cleaned_text, strict=False)
-        
-        # Post-process verification
-        if 'article_title' not in result_json or 'article_content' not in result_json:
-            print("Missing critical fields in Gemini output.")
-            return None
-            
-        result_json['slug'] = clean_slug(result_json.get('slug', result_json['article_title']))
-        return result_json
+    # 1. Try Gemini with key rotation
+    if GEMINI_API_KEYS:
+        for idx, api_key in enumerate(GEMINI_API_KEYS):
+            try:
+                print(f"Attempting Gemini extraction using key #{idx+1}...")
+                genai.configure(api_key=api_key)
+                model = genai.GenerativeModel(
+                    model_name="gemini-2.5-flash",
+                    generation_config=generation_config,
+                    system_instruction=system_instruction
+                )
+                response = model.generate_content(prompt)
+                cleaned_text = clean_json_text(response.text)
+                result_json = json.loads(cleaned_text, strict=False)
+                
+                if 'article_title' in result_json and 'article_content' in result_json:
+                    print("Gemini AI extraction successful.")
+                    result_json['slug'] = clean_slug(result_json.get('slug', result_json['article_title']))
+                    return result_json
+                else:
+                    print("Missing critical fields in Gemini output.")
+            except Exception as e:
+                print(f"Gemini API key #{idx+1} failed: {e}")
+    else:
+        print("No Gemini API keys configured. Checking Groq fallback...")
 
-    except Exception as e:
-        print(f"Gemini API execution failed or rate limit hit: {e}")
-        return None
+    # 2. Try Groq Fallback
+    print("Gemini keys exhausted or missing. Falling back to Groq API...")
+    groq_data = extract_with_groq(prompt, system_instruction)
+    if groq_data:
+        return groq_data
+
+    print("All AI extraction methods failed.")
+    return None

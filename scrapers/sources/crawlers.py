@@ -260,6 +260,92 @@ def scrape_yojana() -> list:
                 })
     return results[:5]
 
+def scrape_rojgarlive() -> list:
+    """Scrapes Rojgarlive latest Sarkari Naukri RSS feed."""
+    url = "https://www.rojgarlive.com/category/sarkari-naukri/feed"
+    html = safe_fetch(url)
+    results = []
+    if not html:
+        return results
+
+    try:
+        soup = BeautifulSoup(html, 'html.parser')
+        items = soup.find_all('item')
+        for item in items:
+            title = item.find('title').text if item.find('title') else ''
+            
+            # Extract link
+            link_text = ''
+            for child in item.children:
+                if child.name == 'link':
+                    link_text = child.text
+                    if not link_text and child.next_sibling:
+                        link_text = child.next_sibling.strip()
+            
+            if title and link_text:
+                category = "Job"
+                if "result" in title.lower():
+                    category = "Result"
+                elif "admit card" in title.lower() or "call letter" in title.lower():
+                    category = "Admit Card"
+                elif "answer key" in title.lower():
+                    category = "Answer Key"
+                    
+                results.append({
+                    "title": title,
+                    "url": link_text,
+                    "category": category,
+                    "source": "Rojgarlive Feed"
+                })
+    except Exception as e:
+        print(f"Error parsing Rojgarlive Feed: {e}")
+        
+    return results[:8]
+
+def scrape_govtjobsblog() -> list:
+    """Scrapes GovtJobsBlog RSS feed for state and central jobs."""
+    url = "https://govtjobsblog.in/feed"
+    html = safe_fetch(url)
+    results = []
+    if not html:
+        return results
+
+    try:
+        soup = BeautifulSoup(html, 'html.parser')
+        items = soup.find_all('item')
+        for item in items:
+            title = item.find('title').text if item.find('title') else ''
+            
+            # Extract link
+            link_text = ''
+            for child in item.children:
+                if child.name == 'link':
+                    link_text = child.text
+                    if not link_text and child.next_sibling:
+                        link_text = child.next_sibling.strip()
+            
+            if title and link_text:
+                category = "Job"
+                if "result" in title.lower():
+                    category = "Result"
+                elif "admit card" in title.lower():
+                    category = "Admit Card"
+                elif "answer key" in title.lower():
+                    category = "Answer Key"
+                elif "yojana" in title.lower() or "scheme" in title.lower():
+                    category = "Sarkari Yojana"
+                    
+                results.append({
+                    "title": title,
+                    "url": link_text,
+                    "category": category,
+                    "source": "GovtJobsBlog Feed"
+                })
+    except Exception as e:
+        print(f"Error parsing GovtJobsBlog Feed: {e}")
+        
+    return results[:8]
+
 def scrape_all_sources() -> list:
     """Orchestrates all source crawlers and combines their notices."""
     all_notices = []
@@ -271,7 +357,9 @@ def scrape_all_sources() -> list:
         scrape_sbi,
         scrape_ncs,
         scrape_employment_news,
-        scrape_yojana
+        scrape_yojana,
+        scrape_rojgarlive,
+        scrape_govtjobsblog
     ]
     for crawler in crawlers:
         try:
