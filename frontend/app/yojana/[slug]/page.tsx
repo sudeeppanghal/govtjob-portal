@@ -131,6 +131,16 @@ export default async function YojanaDetail({ params }: DetailProps) {
               )}
             </div>
 
+            {/* Dynamic Banner Image */}
+            <div className="relative aspect-[1.91/1] w-full overflow-hidden rounded-2xl border border-slate-800 shadow-2xl my-6 bg-slate-950">
+              <img
+                src={`/api/og?title=${slug}`}
+                alt={article_title}
+                className="object-cover w-full h-full"
+                loading="eager"
+              />
+            </div>
+
             <h1 className="text-2xl sm:text-4xl font-extrabold text-white leading-tight">
               {article_title}
             </h1>
