@@ -1,5 +1,14 @@
 import sys
 import os
+import io
+
+# Force UTF-8 encoding on standard output/error to prevent encoding crashes on Windows
+if sys.platform.startswith('win'):
+    try:
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+    except Exception:
+        pass
 
 # Put current path into sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
