@@ -13,7 +13,7 @@ if sys.platform.startswith('win'):
 # Put current path into sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from scrapers.sources.crawlers import scrape_upsc
+from scrapers.sources.crawlers import scrape_upsc, scrape_sarkariyojnaa_portal, scrape_biharhelp_portal
 from scrapers.fallback_generator import generate_fallback_article
 from scrapers.config import supabase
 
@@ -26,6 +26,24 @@ def run_tests():
             print(f"[{idx+1}] Source: {item['source']} | Cat: {item['category']} | Title: {item['title'][:60]}... \n    URL: {item['url']}")
     except Exception as e:
         print(f"UPSC crawler test failed: {e}")
+
+    print("\n=== TEST 1B: Crawling Sarkari Yojana Portal Feed ===")
+    try:
+        yojana_items = scrape_sarkariyojnaa_portal()
+        print(f"Success! Found {len(yojana_items)} items.")
+        for idx, item in enumerate(yojana_items[:3]):
+            print(f"[{idx+1}] Source: {item['source']} | Cat: {item['category']} | Title: {item['title'][:60]}... \n    URL: {item['url']}")
+    except Exception as e:
+        print(f"Sarkari Yojana crawler test failed: {e}")
+
+    print("\n=== TEST 1C: Crawling Bihar Help Portal Feed ===")
+    try:
+        bihar_items = scrape_biharhelp_portal()
+        print(f"Success! Found {len(bihar_items)} items.")
+        for idx, item in enumerate(bihar_items[:3]):
+            print(f"[{idx+1}] Source: {item['source']} | Cat: {item['category']} | Title: {item['title'][:60]}... \n    URL: {item['url']}")
+    except Exception as e:
+        print(f"Bihar Help crawler test failed: {e}")
 
     print("\n=== TEST 2: Testing Rule-Based Fallback Generator ===")
     mock_notice_text = """
