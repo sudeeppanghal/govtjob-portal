@@ -78,8 +78,19 @@ def generate_fallback_article(pdf_text: str, category: str, source_name: str, so
     dates = extract_dates(pdf_text)
     
     # Generate clean slugs and SEO metadata
-    slug_base = f"{source_name}-{category}-{datetime.now().year}"
-    slug_base = re.sub(r'[^a-zA-Z0-9\s-]', '', slug_base).strip().replace(' ', '-').lower()
+    # Use title if long enough, otherwise fallback to source+category+url hash
+    clean_title = re.sub(r'[^a-zA-Z0-9\s-]', '', title).strip().replace(' ', '-').lower()
+    # Normalize multiple dashes to single dashes
+    clean_title = re.sub(r'-+', '-', clean_title)
+    
+    if len(clean_title) > 10:
+        slug_base = clean_title
+    else:
+        import hashlib
+        url_hash = hashlib.md5(source_url.encode('utf-8')).hexdigest()[:6]
+        slug_base = f"{source_name}-{category}-{datetime.now().year}-{url_hash}"
+        slug_base = re.sub(r'[^a-zA-Z0-9\s-]', '', slug_base).strip().replace(' ', '-').lower()
+        slug_base = re.sub(r'-+', '-', slug_base)
     
     article_title = f"{source_name} Recruitment {datetime.now().year}: {category} Notification Out for {vacancies}"
     meta_desc = f"Latest {source_name} {category} notification issued. Check vacancy details, eligibility criteria, application fee, and dates. Apply before {last_date or 'closing date'}."

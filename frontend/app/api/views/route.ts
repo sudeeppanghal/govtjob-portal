@@ -9,6 +9,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing slug parameter" }, { status: 400 });
     }
 
+    // Exclude logged-in administrator visits from traffic statistics
+    const isAdmin = req.cookies.get("admin_session")?.value === "authenticated";
+    if (isAdmin) {
+      return NextResponse.json({ success: true, message: "Admin visit excluded from traffic tracking" });
+    }
+
     const userAgent = req.headers.get("user-agent") || "";
     const rawReferrer = req.headers.get("referer") || "";
     
