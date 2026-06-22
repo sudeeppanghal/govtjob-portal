@@ -1,0 +1,292 @@
+import requests
+from bs4 import BeautifulSoup
+import urllib3
+import re
+
+# Disable insecure request warnings for government sites with outdated SSL configs
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.5',
+    'Connection': 'keep-alive'
+}
+
+def safe_fetch(url: str) -> str:
+    """Safely fetches HTML content from a URL with headers and timeout."""
+    try:
+        response = requests.get(url, headers=HEADERS, verify=False, timeout=20)
+        if response.status_code == 200:
+            return response.text
+        else:
+            print(f"Failed to fetch {url}. Status code: {response.status_code}")
+            return ""
+    except Exception as e:
+        print(f"Error fetching {url}: {e}")
+        return ""
+
+def scrape_upsc() -> list:
+    """Scrapes UPSC active notification links from What's New."""
+    url = "https://upsc.gov.in/whats-new"
+    html = safe_fetch(url)
+    results = []
+    if not html:
+        return results
+
+    soup = BeautifulSoup(html, 'html.parser')
+    # Find all table rows or list elements containing links
+    for a in soup.find_all('a', href=True):
+        text = a.get_text(strip=True)
+        href = a['href']
+        
+        # Look for PDF links or recruitment notices
+        if 'recruitment' in href.lower() or 'examination' in href.lower() or href.endswith('.pdf'):
+            full_url = href if href.startswith('http') else f"https://upsc.gov.in{href}"
+            
+            # Categorize
+            category = "Job"
+            if "result" in text.lower() or "written-result" in href.lower():
+                category = "Result"
+            elif "admit-card" in text.lower() or "e-admit" in href.lower():
+                category = "Admit Card"
+                
+            if len(text) > 15: # Skip short labels
+                results.append({
+                    "title": text,
+                    "url": full_url,
+                    "category": category,
+                    "source": "UPSC"
+                })
+    return results[:5]
+
+def scrape_ssc() -> list:
+    """Scrapes SSC notice links."""
+    # Since SSC uses dynamic frontends, we look at the main portal alerts or RSS feeds
+    url = "https://ssc.gov.in/candidate-portal/notices"
+    # Fallback to homepage notices
+    html = safe_fetch("https://ssc.gov.in/")
+    results = []
+    if not html:
+        # SSC frequently has firewalls, fallback to rss or backup links
+        return results
+
+    soup = BeautifulSoup(html, 'html.parser')
+    for a in soup.find_all('a', href=True):
+        text = a.get_text(strip=True)
+        href = a['href']
+        if href.endswith('.pdf') or 'notice' in href.lower() or 'document' in href.lower():
+            full_url = href if href.startswith('http') else f"https://ssc.gov.in{href}"
+            category = "Job"
+            if "result" in text.lower():
+                category = "Result"
+            elif "admit" in text.lower():
+                category = "Admit Card"
+            elif "answer" in text.lower():
+                category = "Answer Key"
+                
+            if len(text) > 15:
+                results.append({
+                    "title": text,
+                    "url": full_url,
+                    "category": category,
+                    "source": "SSC"
+                })
+    return results[:5]
+
+def scrape_ibps() -> list:
+    """Scrapes IBPS notice board."""
+    url = "https://www.ibps.in/"
+    html = safe_fetch(url)
+    results = []
+    if not html:
+        return results
+
+    soup = BeautifulSoup(html, 'html.parser')
+    # IBPS uses marquee for scrolling new notifications
+    marquee = soup.find('marquee')
+    elements = marquee.find_all('a', href=True) if marquee else soup.find_all('a', href=True)
+    
+    for a in elements:
+        text = a.get_text(strip=True)
+        href = a['href']
+        if 'crp' in href.lower() or href.endswith('.pdf') or 'notification' in href.lower():
+            full_url = href if href.startswith('http') else f"https://www.ibps.in{href}"
+            category = "Job"
+            if "result" in text.lower():
+                category = "Result"
+            elif "admit" in text.lower() or "call-letter" in text.lower():
+                category = "Admit Card"
+            
+            if len(text) > 15:
+                results.append({
+                    "title": text,
+                    "url": full_url,
+                    "category": category,
+                    "source": "IBPS"
+                })
+    return results[:5]
+
+def scrape_rrb() -> list:
+    """Scrapes RRB Chandigarh (Central RRB portal)."""
+    url = "https://www.rrbcdg.gov.in/"
+    html = safe_fetch(url)
+    results = []
+    if not html:
+        return results
+
+    soup = BeautifulSoup(html, 'html.parser')
+    # Parse table rows representing notices
+    for a in soup.find_all('a', href=True):
+        text = a.get_text(strip=True)
+        href = a['href']
+        if href.endswith('.pdf') or 'cen' in href.lower():
+            full_url = href if href.startswith('http') else f"https://www.rrbcdg.gov.in/{href}"
+            category = "Job"
+            if "result" in text.lower() or "score" in text.lower():
+                category = "Result"
+            elif "admit" in text.lower() or "e-call" in text.lower():
+                category = "Admit Card"
+            elif "key" in text.lower():
+                category = "Answer Key"
+                
+            if len(text) > 15:
+                results.append({
+                    "title": text,
+                    "url": full_url,
+                    "category": category,
+                    "source": "RRB"
+                })
+    return results[:5]
+
+def scrape_sbi() -> list:
+    """Scrapes SBI Careers notifications."""
+    url = "https://bank.sbi/web/careers"
+    html = safe_fetch(url)
+    results = []
+    if not html:
+        return results
+
+    soup = BeautifulSoup(html, 'html.parser')
+    # SBI Careers notices lists are usually in accordion blocks
+    for a in soup.find_all('a', href=True):
+        text = a.get_text(strip=True)
+        href = a['href']
+        if 'recruitment' in href.lower() or href.endswith('.pdf'):
+            if 'advertisement' in text.lower() or 'notice' in text.lower():
+                full_url = href if href.startswith('http') else f"https://bank.sbi{href}"
+                category = "Job"
+                if "result" in text.lower():
+                    category = "Result"
+                elif "letter" in text.lower():
+                    category = "Admit Card"
+                    
+                if len(text) > 15:
+                    results.append({
+                        "title": text,
+                        "url": full_url,
+                        "category": category,
+                        "source": "SBI Careers"
+                    })
+    return results[:5]
+
+def scrape_ncs() -> list:
+    """Scrapes National Career Service updates."""
+    url = "https://www.ncs.gov.in/"
+    html = safe_fetch(url)
+    results = []
+    if not html:
+        return results
+
+    soup = BeautifulSoup(html, 'html.parser')
+    for a in soup.find_all('a', href=True):
+        text = a.get_text(strip=True)
+        href = a['href']
+        if 'job' in href.lower() or 'notification' in href.lower():
+            full_url = href if href.startswith('http') else f"https://www.ncs.gov.in{href}"
+            if len(text) > 20:
+                results.append({
+                    "title": text,
+                    "url": full_url,
+                    "category": "Job",
+                    "source": "NCS"
+                })
+    return results[:5]
+
+def scrape_employment_news() -> list:
+    """Scrapes Employment News website notice boards."""
+    url = "https://employmentnews.gov.in/"
+    html = safe_fetch(url)
+    results = []
+    if not html:
+        return results
+
+    soup = BeautifulSoup(html, 'html.parser')
+    for a in soup.find_all('a', href=True):
+        text = a.get_text(strip=True)
+        href = a['href']
+        if href.endswith('.pdf') or 'jobs' in href.lower():
+            full_url = href if href.startswith('http') else f"https://employmentnews.gov.in/{href}"
+            if len(text) > 15:
+                results.append({
+                    "title": text,
+                    "url": full_url,
+                    "category": "Job",
+                    "source": "Employment News"
+                })
+    return results[:5]
+
+def scrape_yojana() -> list:
+    """Scrapes PIB press releases for Yojanas & Government Schemes."""
+    url = "https://pib.gov.in/indexd.aspx" # Press Information Bureau (India)
+    html = safe_fetch(url)
+    results = []
+    if not html:
+        return results
+
+    soup = BeautifulSoup(html, 'html.parser')
+    for a in soup.find_all('a', href=True):
+        text = a.get_text(strip=True)
+        href = a['href']
+        if 'pressrelease' in href.lower() or 'pib.gov.in/PressRelease' in href:
+            full_url = href if href.startswith('http') else f"https://pib.gov.in{href}"
+            # Filter schemes/yojana keyword
+            if any(kw in text.lower() for kw in ['scheme', 'yojana', 'cabinet approves', 'scholarship', 'pension', 'subsidy', 'portal']):
+                results.append({
+                    "title": text,
+                    "url": full_url,
+                    "category": "Sarkari Yojana" if "scheme" in text.lower() or "yojana" in text.lower() else "Scholarship",
+                    "source": "PIB Press"
+                })
+    return results[:5]
+
+def scrape_all_sources() -> list:
+    """Orchestrates all source crawlers and combines their notices."""
+    all_notices = []
+    crawlers = [
+        scrape_upsc,
+        scrape_ssc,
+        scrape_ibps,
+        scrape_rrb,
+        scrape_sbi,
+        scrape_ncs,
+        scrape_employment_news,
+        scrape_yojana
+    ]
+    for crawler in crawlers:
+        try:
+            print(f"Running crawler: {crawler.__name__}")
+            items = crawler()
+            print(f"Found {len(items)} items.")
+            all_notices.extend(items)
+        except Exception as e:
+            print(f"Error executing crawler {crawler.__name__}: {e}")
+            
+    # Deduplicate by url
+    seen_urls = set()
+    deduped = []
+    for item in all_notices:
+        if item['url'] not in seen_urls:
+            seen_urls.add(item['url'])
+            deduped.append(item)
+    return deduped

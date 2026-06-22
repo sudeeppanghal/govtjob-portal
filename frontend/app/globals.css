@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+:root {
+  --background: #090d16;
+  --foreground: #e2e8f0;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+/* Custom slow spin micro-animation */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+/* Prose table customizations for parsed markdown notice tables */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.875rem;
+}
+
+.prose th {
+  background-color: #1e293b;
+  color: #f8fafc;
+  font-weight: 600;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border: 1px solid #334155;
+}
+
+.prose td {
+  padding: 0.75rem 1rem;
+  border: 1px solid #334155;
+  color: #cbd5e1;
+}
+
+.prose tr:nth-child(even) {
+  background-color: rgba(30, 41, 59, 0.2);
+}
+
+.prose a {
+  color: #34d399;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.prose a:hover {
+  color: #6ee7b7;
+}
+
+.prose h1, .prose h2, .prose h3 {
+  color: #f8fafc;
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.prose h1 {
+  font-size: 1.75rem;
+}
+
+.prose h2 {
+  font-size: 1.35rem;
+  border-bottom: 1px solid #1e293b;
+  padding-bottom: 0.5rem;
+}
+
+.prose ul, .prose ol {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+  list-style-type: decimal;
+}
+
+.prose ul {
+  list-style-type: disc;
+}
+
+.prose li {
+  margin-bottom: 0.5rem;
+}
+
+.prose blockquote {
+  border-left: 4px solid #34d399;
+  padding-left: 1rem;
+  margin: 1.5rem 0;
+  color: #94a3b8;
+  font-style: italic;
+  background-color: rgba(52, 211, 153, 0.03);
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-radius: 0 4px 4px 0;
+}
