@@ -19,8 +19,12 @@ export async function GET(request: Request) {
   const workflowId = "scrape_every_10_min.yml";
 
   if (!githubToken || !owner || !repo) {
+    const missing = [];
+    if (!githubToken) missing.push("GITHUB_PAT");
+    if (!owner) missing.push("GITHUB_OWNER");
+    if (!repo) missing.push("GITHUB_REPO");
     return NextResponse.json(
-      { error: "GitHub configuration missing. Set GITHUB_PAT, GITHUB_OWNER, and GITHUB_REPO." },
+      { error: `GitHub configuration missing: ${missing.join(", ")} is undefined.` },
       { status: 500 }
     );
   }
