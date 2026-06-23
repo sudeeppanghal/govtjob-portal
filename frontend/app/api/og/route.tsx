@@ -368,16 +368,26 @@ export async function GET(request: NextRequest) {
                 style={{
                   display: "flex",
                   alignSelf: "flex-start",
-                  border: "4px double #00C853",
-                  borderRadius: "10px",
-                  padding: "8px 30px",
+                  border: "2px solid #00C853",
+                  borderRadius: "12px",
+                  padding: "2px",
                   backgroundColor: "#FFFF00",
                   boxShadow: "5px 5px 0px #000000"
                 }}
               >
-                <span style={{ fontSize: "48px", fontWeight: "900", color: "#000000", lineHeight: "1.1" }}>
-                  {eligibilityText}
-                </span>
+                <div
+                  style={{
+                    display: "flex",
+                    border: "2px solid #00C853",
+                    borderRadius: "8px",
+                    padding: "6px 28px",
+                    backgroundColor: "#FFFF00"
+                  }}
+                >
+                  <span style={{ fontSize: "48px", fontWeight: "900", color: "#000000", lineHeight: "1.1" }}>
+                    {eligibilityText}
+                  </span>
+                </div>
               </div>
 
               <div
@@ -454,7 +464,7 @@ export async function GET(request: NextRequest) {
                       paddingBottom: "5px"
                     }}
                   >
-                    \u0939\u0947\u0924\u0941 \u0906\u0935\u0947\u0926\u0928-\u092a\u0924\u094d\u0930
+                    {"\u0939\u0947\u0924\u0941 \u0906\u0935\u0947\u0926\u0928-\u092a\u0924\u094d\u0930"}
                   </span>
                   <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                     <div style={{ width: "120px", height: "4px", backgroundColor: "#CBD5E1" }} />
