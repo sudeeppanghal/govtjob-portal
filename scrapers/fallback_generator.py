@@ -97,13 +97,36 @@ def generate_fallback_article(pdf_text: str, category: str, source_name: str, so
         "result": "परीक्षा परिणाम (Result)",
         "admit card": "एडमिट कार्ड (Admit Card)",
         "answer key": "उत्तर कुंजी (Answer Key)",
-        "sarkari yojana": "सरकारी योजना (Sarkari Yojana)",
-        "scholarship": "स्कॉलरशिप (Scholarship)"
+        "sarkari yojana": "सरकारी योजना",
+        "scholarship": "स्कॉलरशिप"
     }
     cat_lower = category.lower()
     hindi_suffix = category_hindi.get(cat_lower, "सरकारी अपडेट")
 
-    article_title = f"{source_name} Recruitment {datetime.now().year}: {category} Notification Out ({hindi_suffix})"
+    year = datetime.now().year
+    
+    # We clean the title to be used for Yojana/Scholarship to avoid double year or double category suffix
+    clean_feed_title = title
+    # Remove common year suffixes if they already exist in the feed title
+    clean_feed_title = re.sub(r'\b(2024|2025|2026)\b', '', clean_feed_title).strip()
+    clean_feed_title = re.sub(r'\s+', ' ', clean_feed_title)
+
+    if cat_lower == 'job':
+        vac_str = f"for {vacancies}" if "refer" not in vacancies.lower() else "for Various Posts"
+        article_title = f"{source_name} Recruitment {year} - Apply Online {vac_str} ({hindi_suffix} {year})"
+    elif cat_lower == 'admit card':
+        article_title = f"{source_name} Admit Card {year} - Download Hall Ticket Link Active ({hindi_suffix})"
+    elif cat_lower == 'result':
+        article_title = f"{source_name} Result {year} - Merit List, Cut Off Marks PDF ({hindi_suffix})"
+    elif cat_lower == 'answer key':
+        article_title = f"{source_name} Answer Key {year} - Download PDF & Objections Link ({hindi_suffix})"
+    elif cat_lower == 'sarkari yojana':
+        article_title = f"{clean_feed_title} {year} - Online Registration, Eligibility & Beneficiary Status (सरकारी योजना)"
+    elif cat_lower == 'scholarship':
+        article_title = f"{clean_feed_title} {year} - Online Application, Eligibility & Last Date (स्कॉलरशिप)"
+    else:
+        article_title = f"{source_name} {category} {year} Notification Out ({hindi_suffix})"
+
     meta_desc = f"Latest {source_name} {category} notification issued ({hindi_suffix}). Check vacancy details, eligibility, application fee, and dates. Apply before {last_date or 'closing date'}."
     
     # Pre-designed Markdown bilingual template

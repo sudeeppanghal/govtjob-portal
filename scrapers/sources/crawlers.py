@@ -262,9 +262,9 @@ def scrape_yojana() -> list:
                 })
     return results[:5]
 
-def scrape_rojgarlive() -> list:
-    """Scrapes Rojgarlive latest Sarkari Naukri RSS feed."""
-    url = "https://www.rojgarlive.com/category/sarkari-naukri/feed"
+def scrape_pmmodiyojana_portal() -> list:
+    """Scrapes pmmodiyojana.in RSS feed for PM government schemes."""
+    url = "https://pmmodiyojana.in/feed/"
     html = safe_fetch(url)
     results = []
     if not html:
@@ -285,68 +285,20 @@ def scrape_rojgarlive() -> list:
                         link_text = child.next_sibling.strip()
             
             if title and link_text:
-                category = "Job"
-                if "result" in title.lower():
-                    category = "Result"
-                elif "admit card" in title.lower() or "call letter" in title.lower():
-                    category = "Admit Card"
-                elif "answer key" in title.lower():
-                    category = "Answer Key"
-                    
+                category = "Sarkari Yojana"
+                if "scholarship" in title.lower() or "chhatravriti" in title.lower():
+                    category = "Scholarship"
+                
                 results.append({
                     "title": title,
                     "url": link_text,
                     "category": category,
-                    "source": "Rojgarlive Feed"
+                    "source": "PM Modi Yojana Portal"
                 })
     except Exception as e:
-        print(f"Error parsing Rojgarlive Feed: {e}")
+        print(f"Error parsing PM Modi Yojana Feed: {e}")
         
-    return results[:8]
-
-def scrape_govtjobsblog() -> list:
-    """Scrapes GovtJobsBlog RSS feed for state and central jobs."""
-    url = "https://govtjobsblog.in/feed"
-    html = safe_fetch(url)
-    results = []
-    if not html:
-        return results
-
-    try:
-        soup = BeautifulSoup(html, 'html.parser')
-        items = soup.find_all('item')
-        for item in items:
-            title = item.find('title').text if item.find('title') else ''
-            
-            # Extract link
-            link_text = ''
-            for child in item.children:
-                if child.name == 'link':
-                    link_text = child.text
-                    if not link_text and child.next_sibling:
-                        link_text = child.next_sibling.strip()
-            
-            if title and link_text:
-                category = "Job"
-                if "result" in title.lower():
-                    category = "Result"
-                elif "admit card" in title.lower():
-                    category = "Admit Card"
-                elif "answer key" in title.lower():
-                    category = "Answer Key"
-                elif "yojana" in title.lower() or "scheme" in title.lower():
-                    category = "Sarkari Yojana"
-                    
-                results.append({
-                    "title": title,
-                    "url": link_text,
-                    "category": category,
-                    "source": "GovtJobsBlog Feed"
-                })
-    except Exception as e:
-        print(f"Error parsing GovtJobsBlog Feed: {e}")
-        
-    return results[:8]
+    return results[:30]
 
 def scrape_sarkariyojnaa_portal() -> list:
     """Scrapes sarkariyojnaa.com RSS feed for government schemes."""
@@ -384,10 +336,10 @@ def scrape_sarkariyojnaa_portal() -> list:
     except Exception as e:
         print(f"Error parsing Sarkari Yojana Feed: {e}")
         
-    return results[:10]
+    return results[:30]
 
 def scrape_biharhelp_portal() -> list:
-    """Scrapes biharhelp.in RSS feed for state schemes and scholarships."""
+    """Scrapes biharhelp.in RSS feed for state schemes and scholarships (filtering out jobs)."""
     url = "https://biharhelp.in/feed/"
     html = safe_fetch(url)
     results = []
@@ -409,29 +361,27 @@ def scrape_biharhelp_portal() -> list:
                         link_text = child.next_sibling.strip()
             
             if title and link_text:
-                category = "Sarkari Yojana"
                 title_lower = title.lower()
+                
+                # Check if it is a genuine yojana or scholarship, filter out exam/jobs
+                is_yojana = True
+                category = "Sarkari Yojana"
                 if "scholarship" in title_lower or "scholar" in title_lower or "chhatravriti" in title_lower or "स्कॉलरशिप" in title:
                     category = "Scholarship"
-                elif "admit card" in title_lower or "admit-card" in title_lower or "प्रवेश पत्र" in title:
-                    category = "Admit Card"
-                elif "result" in title_lower or "परिणाम" in title:
-                    category = "Result"
-                elif "vacancy" in title_lower or "recruitment" in title_lower or "bharti" in title_lower or "नौकरी" in title or "job" in title_lower:
-                    category = "Job"
-                elif "answer key" in title_lower or "उत्तर कुंजी" in title:
-                    category = "Answer Key"
+                elif any(kw in title_lower for kw in ["admit card", "admit-card", "प्रवेश पत्र", "result", "परिणाम", "vacancy", "recruitment", "bharti", "नौकरी", "job", "answer key", "उत्तर कुंजी"]):
+                    is_yojana = False
                 
-                results.append({
-                    "title": title,
-                    "url": link_text,
-                    "category": category,
-                    "source": "Bihar Help Portal"
-                })
+                if is_yojana:
+                    results.append({
+                        "title": title,
+                        "url": link_text,
+                        "category": category,
+                        "source": "Bihar Help Portal"
+                    })
     except Exception as e:
         print(f"Error parsing Bihar Help Feed: {e}")
         
-    return results[:10]
+    return results[:30]
 
 def scrape_all_sources() -> list:
     """Orchestrates all source crawlers and combines their notices."""
@@ -442,11 +392,9 @@ def scrape_all_sources() -> list:
         scrape_ibps,
         scrape_rrb,
         scrape_sbi,
-        scrape_ncs,
         scrape_employment_news,
         scrape_yojana,
-        scrape_rojgarlive,
-        scrape_govtjobsblog,
+        scrape_pmmodiyojana_portal,
         scrape_sarkariyojnaa_portal,
         scrape_biharhelp_portal
     ]
@@ -467,3 +415,4 @@ def scrape_all_sources() -> list:
             seen_urls.add(item['url'])
             deduped.append(item)
     return deduped
+

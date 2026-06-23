@@ -13,7 +13,7 @@ if sys.platform.startswith('win'):
 # Put current path into sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from scrapers.sources.crawlers import scrape_upsc, scrape_sarkariyojnaa_portal, scrape_biharhelp_portal
+from scrapers.sources.crawlers import scrape_upsc, scrape_sarkariyojnaa_portal, scrape_biharhelp_portal, scrape_pmmodiyojana_portal
 from scrapers.fallback_generator import generate_fallback_article
 from scrapers.config import supabase
 
@@ -44,6 +44,15 @@ def run_tests():
             print(f"[{idx+1}] Source: {item['source']} | Cat: {item['category']} | Title: {item['title'][:60]}... \n    URL: {item['url']}")
     except Exception as e:
         print(f"Bihar Help crawler test failed: {e}")
+
+    print("\n=== TEST 1D: Crawling PM Modi Yojana Portal Feed ===")
+    try:
+        pm_items = scrape_pmmodiyojana_portal()
+        print(f"Success! Found {len(pm_items)} items.")
+        for idx, item in enumerate(pm_items[:3]):
+            print(f"[{idx+1}] Source: {item['source']} | Cat: {item['category']} | Title: {item['title'][:60]}... \n    URL: {item['url']}")
+    except Exception as e:
+        print(f"PM Modi Yojana crawler test failed: {e}")
 
     print("\n=== TEST 2: Testing Rule-Based Fallback Generator ===")
     mock_notice_text = """
