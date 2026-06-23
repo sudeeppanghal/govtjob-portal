@@ -152,6 +152,12 @@ def process_single_notice(notice: dict) -> tuple:
             states=data.get('states', [])
         )
         
+        # Validate and sanitize last_date to prevent database date-format crashes (e.g. from 'Not Mentioned')
+        raw_last_date = data.get('last_date')
+        clean_last_date = None
+        if raw_last_date and re.match(r'^\d{4}-\d{2}-\d{2}$', str(raw_last_date).strip()):
+            clean_last_date = str(raw_last_date).strip()
+
         insert_data = {
             "source_name": source,
             "source_url": url,
@@ -164,7 +170,7 @@ def process_single_notice(notice: dict) -> tuple:
             "meta_description": data['meta_description'],
             "schemas": data['schemas'],
             "status": "published",
-            "last_date": data['last_date'],
+            "last_date": clean_last_date,
             "qualifications": data['qualifications'],
             "states": data['states'],
             "image_url": image_url,
