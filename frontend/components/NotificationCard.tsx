@@ -96,14 +96,13 @@ export default function NotificationCard({ notification }: NotificationCardProps
   return (
     <div className="group bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:scale-[1.01] transition-all duration-300 flex flex-col h-full">
       {/* Top Category Illustration Header */}
-      <div className={`h-36 bg-gradient-to-tr ${details.bgGradient} relative flex items-center justify-center overflow-hidden`}>
-        {/* Decorative Grid Lines */}
-        <div className="absolute inset-0 opacity-10 bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:15px_15px]" />
-        
-        {/* Glow overlay */}
-        <div className="absolute -right-10 -top-10 w-28 h-28 bg-white/20 rounded-full blur-xl" />
-        
-        <IconComponent className="h-14 w-14 text-white drop-shadow-md z-10" />
+      <div className="relative aspect-[1.91/1] w-full overflow-hidden bg-slate-100 border-b border-slate-150">
+        <img
+          src={`/api/og?title=${slug}`}
+          alt={article_title}
+          className="object-cover w-full h-full group-hover:scale-[1.02] transition-transform duration-300"
+          loading="lazy"
+        />
 
         {/* Source badge overlay */}
         <span className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-lg border border-slate-100 uppercase tracking-wider">

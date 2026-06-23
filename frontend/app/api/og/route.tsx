@@ -4,20 +4,220 @@ import { supabase } from "../../../lib/supabase";
 
 export const runtime = "edge";
 
+let cachedFontData: ArrayBuffer | null = null;
+let cachedEmblemBase64: string | null = null;
+let cachedPhotoBase64: string | null = null;
+
+async function getFontData() {
+  if (cachedFontData) return cachedFontData;
+  
+  try {
+    const fontUrl = new URL("../../../public/fonts/Khand-Bold.ttf", import.meta.url);
+    const res = await fetch(fontUrl);
+    if (res.ok) {
+      cachedFontData = await res.arrayBuffer();
+      return cachedFontData;
+    }
+  } catch (err) {
+    console.warn("Local font fetch failed, trying fallback:", err);
+  }
+
+  const fallbackRes = await fetch("https://github.com/google/fonts/raw/main/ofl/khand/Khand-Bold.ttf");
+  cachedFontData = await fallbackRes.arrayBuffer();
+  return cachedFontData;
+}
+
+async function getEmblemData() {
+  if (cachedEmblemBase64) return cachedEmblemBase64;
+  
+  try {
+    const emblemUrl = new URL("../../../public/emblem.png", import.meta.url);
+    const res = await fetch(emblemUrl);
+    if (res.ok) {
+      const buffer = await res.arrayBuffer();
+      cachedEmblemBase64 = `data:image/png;base64,${Buffer.from(buffer).toString("base64")}`;
+      return cachedEmblemBase64;
+    }
+  } catch (err) {
+    console.warn("Local emblem fetch failed, trying fallback:", err);
+  }
+
+  try {
+    const res = await fetch("https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Emblem_of_India.svg/250px-Emblem_of_India.svg.png", {
+      headers: { "User-Agent": "Mozilla/5.0" }
+    });
+    if (res.ok) {
+      const buffer = await res.arrayBuffer();
+      cachedEmblemBase64 = `data:image/png;base64,${Buffer.from(buffer).toString("base64")}`;
+      return cachedEmblemBase64;
+    }
+  } catch (err) {
+    console.error("Emblem fallback download failed:", err);
+  }
+  return "";
+}
+
+async function getPhotoData() {
+  if (cachedPhotoBase64) return cachedPhotoBase64;
+  
+  try {
+    const photoUrl = new URL("../../../public/passport_photo.png", import.meta.url);
+    const res = await fetch(photoUrl);
+    if (res.ok) {
+      const buffer = await res.arrayBuffer();
+      cachedPhotoBase64 = `data:image/png;base64,${Buffer.from(buffer).toString("base64")}`;
+      return cachedPhotoBase64;
+    }
+  } catch (err) {
+    console.warn("Local photo fetch failed:", err);
+  }
+  return "";
+}
+
+function extractHindiTitle(fullTitle: string, category: string, source: string): { title: string; year: string } {
+  const parenMatch = fullTitle.match(/\(([^)]+)\)\s*$/);
+  let extracted = "";
+  if (parenMatch) {
+    const candidate = parenMatch[1].trim();
+    if (/[\u0900-\u097F]/.test(candidate)) {
+      const lower = candidate.toLowerCase();
+      if (lower !== "\\u0938\\u0930\\u0915\\u093e\\u0930\\u0940 \\u092f\\u094b\\u091c\\u0928\\u093e" && lower !== "\\u0938\\u094d\\u0915\\u0949\\u0932\\u0930\\u0936\\u093f\\u092a" && lower !== "\\u0938\\u092c\\u0938\\u0947 \\u092c\\u0947\\u0938\\u094d\\u091f \\u1f525" && lower !== "\\u0938\\u0930\\u0915\\u093e\\u0930\\u0940 \\u0928\\u094c\\u0915\\u0930\\u0940 \\u092d\\u0930\\u094d\\u0924\\u0940") {
+        extracted = candidate;
+      }
+    }
+  }
+
+  if (!extracted) {
+    const devanagariMatches = fullTitle.match(/[\u0900-\u097F][\u0900-\u097F\s\d\\u0966-\\u096f\-:|\\u2014,()]+/g);
+    if (devanagariMatches) {
+      const longest = devanagariMatches.reduce((a, b) => a.length > b.length ? a : b, "");
+      if (longest.trim().length > 5) {
+        extracted = longest.trim();
+      }
+    }
+  }
+
+  if (!extracted) {
+    const cleanSource = source.replace(/blog|feed/gi, "").trim();
+    const catLower = category.toLowerCase();
+    if (catLower.includes("job")) {
+      extracted = `${cleanSource} \\u0938\\u0930\\u0915\\u093e\\u0930\\u0940 \\u092d\\u0930\\u094d\\u0924\\u0940`;
+    } else if (catLower.includes("yojana")) {
+      extracted = `${cleanSource} \\u0938\\u0930\\u0915\\u093e\\u0930\\u0940 \\u092f\\u094b\\u091c\\u0928\\u093e`;
+    } else if (catLower.includes("admit")) {
+      extracted = `${cleanSource} \\u090f\\u0921\\u092e\\u093f\\u091f \\u0915\\u093e\\u0930\\u094d\\u0921`;
+    } else if (catLower.includes("result")) {
+      extracted = `${cleanSource} \\u092a\\u0930\\u0940\\u0915\\u094d\\u0937\\u093e \\u092a\\u0930\\u093f\\u0923\\u093e\\u092e`;
+    } else if (catLower.includes("key")) {
+      extracted = `${cleanSource} \\u0909\\u0924\\u094d\\u0924\\u0930 \\u0915\\u0941\\u0902\\u091c\\u0940`;
+    } else {
+      extracted = `${cleanSource} \\u0928\\u092f\\u093e \\u0905\\u092a\\u0921\\u0947\\u091f`;
+    }
+  }
+
+  extracted = extracted.replace(/^[\s\-:|\\u2014,]+|[\s\-:|\\u2014,]+$/g, "").trim();
+
+  const yearMatch = fullTitle.match(/\b(202[4-9]|2030)\b/);
+  const year = yearMatch ? yearMatch[1] : new Date().getFullYear().toString();
+
+  extracted = extracted.replace(new RegExp(`\\b${year}\\b`, "g"), "").trim();
+  extracted = extracted.replace(/\s+/g, " ");
+
+  return { title: extracted, year };
+}
+
+function getSubBannerText(category: string, source: string): string {
+  const catLower = category.toLowerCase();
+  const cleanSource = source.replace(/blog|feed/gi, "").trim();
+  
+  if (catLower.includes("job") || catLower === "jobs") {
+    return `${cleanSource} \\u0915\\u0947 \\u092a\\u0926\\u094b\\u0902 \\u092a\\u0930 \\u0938\\u0940\\u0927\\u0940 \\u092d\\u0930\\u094d\\u0924\\u0940`;
+  } else if (catLower.includes("yojana")) {
+    return `\\u092f\\u094b\\u091c\\u0928\\u093e \\u0915\\u093e \\u092a\\u0942\\u0930\\u093e \\u0935\\u093f\\u0935\\u0930\\u0923 \\u0914\\u0930 \\u0911\\u0928\\u0932\\u093e\\u0907\\u0928 \\u0906\\u0935\\u0947\\u0926\\u0928`;
+  } else if (catLower.includes("admit")) {
+    return `\\u092a\\u0930\\u0940\\u0915\\u094d\\u0937\\u093e \\u0924\\u093f\\u0925\\u093f \\u0914\\u0930 \\u090f\\u0921\\u092e\\u093f\\u091f \\u0915\\u093e\\u0930\\u094d\\u0921 \\u0921\\u093e\\u0909\\u0928\\u0932\\u094b\\u0921 \\u0932\\u093f\\u0902\\u0915`;
+  } else if (catLower.includes("result")) {
+    return `\\u092a\\u0930\\u0940\\u0915\\u094d\\u0937\\u093e \\u092a\\u0930\\u093f\\u0923\\u093e\\u092e \\u0914\\u0930 \\u0915\\u091f-\\u0911\\u092b \\u092e\\u0947\\u0930\\u093f\\u091f \\u0932\\u093f\\u0938\\u094d\\u091f`;
+  } else if (catLower.includes("key")) {
+    return `\\u0906\\u0927\\u093f\\u0915\\u093e\\u0930\\u093f\\u0915 \\u0909\\u0924\\u094d\\u0924\\u0930 \\u0915\\u0941\\u0902\\u091c\\u0940 \\u092f\\u0939\\u093e\\u0901 \\u0938\\u0947 \\u0921\\u093e\\u0909\\u0928\\u0932\\u094b\\u0921 \\u0915\\u0930\\u0947\\u0902`;
+  } else if (catLower.includes("scholarship")) {
+    return `\\u091b\\u093e\\u0924\\u094d\\u0930\\u0935\\u0943\\u0924\\u094d\\u0924\\u093f \\u0915\\u0947 \\u0932\\u093f\\u090f \\u0911\\u0928\\u0932\\u093e\\u0907\\u0928 \\u0906\\u0935\\u0947\\u0926\\u0928 \\u092a\\u094d\\u0930\\u0915\\u094d\\u0930\\u093f\\u092f\\u093e`;
+  }
+  return `\\u0928\\u092f\\u093e \\u0928\\u094b\\u091f\\u093f\\u092b\\u093f\\u0915\\u0947\\u0936\\u0928 \\u0914\\u0930 \\u0906\\u0935\\u0947\\u0926\\u0928 \\u0915\\u0940 \\u092a\\u0942\\u0930\\u0940 \\u091c\\u093e\\u0928\\u0915\\u093e\\u0930\\u0940`;
+}
+
+function translateQualifications(quals: string[], category: string): string {
+  const catLower = category.toLowerCase();
+  const hasValidQual = quals && quals.length > 0 && quals.some(q => {
+    const l = q.toLowerCase();
+    return !l.includes("check") && !l.includes("refer") && !l.includes("mention") && !l.includes("notif");
+  });
+
+  if (!hasValidQual) {
+    if (catLower.includes("job") || catLower === "jobs") {
+      return "10\\u0935\\u0940\\u0902, 12\\u0935\\u0940\\u0902, \\u0917\\u094d\\u0930\\u0947\\u091c\\u0941\\u090f\\u091f \\u092a\\u093e\\u0938";
+    }
+    return "\\u092f\\u094b\\u0917\\u094d\\u092f\\u0924\\u093e: \\u0928\\u094b\\u091f\\u093f\\u092b\\u093f\\u0915\\u0947\\u0936\\u0928 \\u0926\\u0947\\u0916\\u0947\\u0902";
+  }
+  
+  const map: Record<string, string> = {
+    "10th": "10\\u0935\\u0940\\u0902 \\u092a\\u093e\\u0938",
+    "12th": "12\\u0935\\u0940\\u0902 \\u092a\\u093e\\u0938",
+    "graduate": "\\u0917\\u094d\\u0930\\u0947\\u091c\\u0941\\u090f\\u091f \\u092a\\u093e\\u0938",
+    "graduation": "\\u0917\\u094d\\u0930\\u0947\\u091c\\u0941\\u090f\\u091f \\u092a\\u093e\\u0938",
+    "iti": "ITI \\u092a\\u093e\\u0938",
+    "diploma": "\\u0921\\u093f\\u092a\\u094d\\u0932\\u094b\\u092e\\u093e \\u092a\\u093e\\u0938",
+    "post graduate": "PG \\u092a\\u093e\\u0938",
+    "pg": "PG \\u092a\\u093e\\u0938",
+    "llb": "LLB \\u092a\\u093e\\u0938",
+    "b.ed": "B.Ed \\u092a\\u093e\\u0938",
+    "b.tech": "B.Tech \\u092a\\u093e\\u0938"
+  };
+
+  const translated = quals.map(q => {
+    const clean = q.toLowerCase().replace(/pass/gi, "").trim();
+    return map[clean] || q;
+  });
+
+  const unique = Array.from(new Set(translated));
+  return unique.slice(0, 3).join(", ");
+}
+
+function formatHindiDate(lastDateStr: string | null): string {
+  if (!lastDateStr) return "\\u0906\\u0935\\u0947\\u0926\\u0928 \\u0936\\u0941\\u0930\\u0942 - \\u091c\\u0932\\u094d\\u0926 \\u0915\\u0930\\u0947\\u0902";
+
+  try {
+    const date = new Date(lastDateStr);
+    if (isNaN(date.getTime())) return "\\u0906\\u0935\\u0947\\u0926\\u0928 \\u0936\\u0941\\u0930\\u0942 - \\u091c\\u0932\\u094d\\u0926 \\u0915\\u0930\\u0947\\u0902";
+
+    const months = [
+      "\\u091c\\u0928\\u0935\\u0930\\u0940", "\\u092b\\u0930\\u0935\\u0930\\u0940", "\\u092e\\u093e\\u0930\\u094d\\u091a", "\\u0905\\u092a\\u094d\\u0930\\u0948\\u0932", "\\u092e\\u0908", "\\u091c\\u0942\\u0928",
+      "\\u091c\\u0941\\u0932\\u093e\\u0908", "\\u0905\\u0917\\u0938\\u094d\\u0924", "\\u0938\\u093f\\u0924\\u092e\\u094d\\u092c\\u0930", "\\u0905\\u0915\\u094d\\u091f\\u0942\\u092c\\u0930", "\\u0928\\u0935\\u092e\\u094d\\u092c\\u0930", "\\u0926\\u093f\\u0938\\u092e\\u094d\\u092c\\u0930"
+    ];
+
+    const day = date.getDate();
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+
+    return `\\u0905\\u0902\\u0924\\u093f\\u092e \\u0924\\u093f\\u0925\\u093f - ${day} ${month} ${year}`;
+  } catch (e) {
+    return "\\u0906\\u0935\\u0947\\u0926\\u0928 \\u0936\\u0941\\u0930\\u0942 - \\u091c\\u0932\\u094d\\u0926 \\u0915\\u0930\\u0947\\u0902";
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const slug = searchParams.get("title"); // Scraper sends slug here
+    const slug = searchParams.get("title");
     
     let source = "GOVT JOB";
     let title = "Recruitment Notification";
-    let vacancies = "Latest Posts";
+    let vacancies = "";
     let qualifications = ["10th", "12th", "Graduation"];
-    let lastDateText = "Apply Online Now";
+    let lastDate: string | null = null;
     let category = "NOTIFICATION";
 
     if (slug) {
-      // Fetch details from Supabase to dynamically fill the thumbnail content
       const { data } = await supabase
         .from("notifications")
         .select("source_name, article_title, category, extracted_json, qualifications, last_date")
@@ -28,45 +228,31 @@ export async function GET(request: NextRequest) {
         source = data.source_name ? data.source_name.toUpperCase() : source;
         title = data.article_title ? data.article_title : title;
         category = data.category ? data.category.toUpperCase() : category;
+        lastDate = data.last_date;
         
-        // Extract vacancies count
+        if (data.qualifications && data.qualifications.length > 0) {
+          qualifications = data.qualifications;
+        }
+        
         if (data.extracted_json && data.extracted_json.vacancies) {
           const vacStr = data.extracted_json.vacancies.toString();
-          vacancies = vacStr.toLowerCase().includes("post") ? vacStr : `${vacStr} Posts`;
-        }
-        
-        // Extract qualifications
-        if (data.qualifications && data.qualifications.length > 0) {
-          qualifications = data.qualifications.slice(0, 3);
-        }
-        
-        // Format last date
-        if (data.last_date) {
-          const date = new Date(data.last_date);
-          const formattedDate = date.toLocaleDateString("en-IN", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric"
-          });
-          lastDateText = `Apply by: ${formattedDate}`;
+          const digits = vacStr.match(/\b\d+[\d,+]*/);
+          if (digits) {
+            vacancies = digits[0];
+          }
         }
       }
     }
 
-    // Clean title for rendering - truncate if too long
-    const displayTitle = title.length > 70 ? `${title.slice(0, 70)}...` : title;
+    const parsed = extractHindiTitle(title, category, source);
+    const subBannerText = getSubBannerText(category, source);
+    const eligibilityText = translateQualifications(qualifications, category);
+    const dateText = formatHindiDate(lastDate);
+    const vacanciesText = vacancies ? `\\u092a\\u0926 - ${vacancies}` : "\\u092c\\u095c\\u0940 \\u092d\\u0930\\u094d\\u0924\\u0940";
 
-    // Theme color based on category
-    const getCategoryColor = (cat: string) => {
-      const normalCat = cat.toLowerCase();
-      if (normalCat === "admit card") return "#3b82f6"; // Blue
-      if (normalCat === "result") return "#10b981"; // Emerald
-      if (normalCat === "answer key") return "#8b5cf6"; // Purple
-      if (normalCat === "sarkari yojana") return "#ec4899"; // Pink
-      return "#f43f5e"; // Rose
-    };
-
-    const accentColor = getCategoryColor(category);
+    const fontData = await getFontData();
+    const emblemBase64 = await getEmblemData();
+    const photoBase64 = await getPhotoData();
 
     return new ImageResponse(
       (
@@ -76,211 +262,253 @@ export async function GET(request: NextRequest) {
             width: "100%",
             display: "flex",
             flexDirection: "column",
-            backgroundColor: "#030712",
-            backgroundImage: "linear-gradient(135deg, #090d16 0%, #030712 100%)",
-            padding: "50px 60px",
-            fontFamily: "sans-serif",
+            backgroundColor: "#FFFF00",
+            fontFamily: "Khand",
             position: "relative",
-            justifyContent: "space-between"
+            overflow: "hidden"
           }}
         >
-          {/* Decorative Glowing Circle in top right */}
           <div
             style={{
-              position: "absolute",
-              top: "-150px",
-              right: "-150px",
-              width: "500px",
-              height: "500px",
-              borderRadius: "50%",
-              backgroundImage: "radial-gradient(circle, rgba(37, 99, 235, 0.15) 0%, rgba(37, 99, 235, 0) 70%)",
-              display: "flex"
-            }}
-          />
-
-          {/* Top Navbar Row */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
+              height: "120px",
               width: "100%",
-              zIndex: 10
+              backgroundColor: "#00E5FF",
+              display: "flex",
+              alignItems: "center",
+              borderBottom: "4px solid #000000",
+              paddingLeft: "30px",
+              paddingRight: "30px",
+              position: "relative"
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-              <div
+            {emblemBase64 && (
+              <img
+                src={emblemBase64}
                 style={{
-                  display: "flex",
-                  padding: "10px",
-                  backgroundColor: "rgba(59, 130, 246, 0.08)",
-                  borderRadius: "16px",
-                  border: "1px solid rgba(59, 130, 246, 0.2)"
+                  width: "70px",
+                  height: "100px",
+                  marginRight: "25px",
+                  objectFit: "contain",
+                  display: "flex"
                 }}
-              >
-                {/* Train SVG Icon */}
-                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 3h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>
-                  <path d="M4 11h16"/>
-                  <path d="M12 3v8"/>
-                  <path d="M6 17l-2 4"/>
-                  <path d="M18 17l2 4"/>
-                </svg>
-              </div>
-              <span style={{ fontSize: "24px", fontWeight: "900", color: "#ffffff", letterSpacing: "0.5px" }}>
-                RAILWAY ADMIT CARD
-              </span>
-            </div>
+              />
+            )}
 
             <div
               style={{
                 display: "flex",
-                backgroundColor: "rgba(16, 185, 129, 0.08)",
-                border: "1.5px solid rgba(16, 185, 129, 0.25)",
-                color: "#10b981",
-                padding: "8px 20px",
-                borderRadius: "9999px",
-                fontSize: "14px",
-                fontWeight: "800",
-                letterSpacing: "1.5px",
-                textTransform: "uppercase"
+                flexGrow: 1,
+                alignItems: "center",
+                justifyContent: "flex-start",
+                paddingBottom: "5px"
               }}
             >
-              VERIFIED OFFICIAL UPDATE
+              <span style={{ fontSize: "74px", fontWeight: "900", color: "#000000", letterSpacing: "1px" }}>
+                {parsed.title}
+              </span>
+              <span style={{ fontSize: "74px", fontWeight: "900", color: "#FF0000", marginLeft: "25px" }}>
+                {parsed.year}
+              </span>
             </div>
           </div>
 
-          {/* Middle Body Row */}
+          <div
+            style={{
+              height: "85px",
+              width: "100%",
+              backgroundColor: "#2B2D2F",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderBottom: "4px solid #000000"
+            }}
+          >
+            <span style={{ fontSize: "48px", fontWeight: "800", color: "#FFFFFF", letterSpacing: "1px" }}>
+              {subBannerText}
+            </span>
+          </div>
+
           <div
             style={{
               display: "flex",
               flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
               width: "100%",
-              flexGrow: 1,
-              marginTop: "40px",
-              zIndex: 10
+              height: "425px",
+              padding: "25px 40px",
+              justifyContent: "space-between",
+              alignItems: "center"
             }}
           >
-            {/* Left Content Side */}
             <div
               style={{
                 display: "flex",
                 flexDirection: "column",
-                flexGrow: 1,
-                marginRight: "50px",
-                maxWidth: "680px"
+                width: "700px",
+                height: "340px",
+                justifyContent: "space-between"
               }}
             >
-              {/* Category Tag */}
               <div
                 style={{
                   display: "flex",
-                  fontSize: "15px",
-                  fontWeight: "800",
-                  color: accentColor,
-                  letterSpacing: "2px",
-                  textTransform: "uppercase",
-                  marginBottom: "16px"
+                  backgroundColor: "#FFFFFF",
+                  border: "4px solid #000000",
+                  borderRadius: "32px",
+                  padding: "6px 50px",
+                  alignSelf: "flex-start",
+                  boxShadow: "6px 6px 0px #000000"
                 }}
               >
-                {category}
+                <span style={{ fontSize: "56px", fontWeight: "900", color: "#FF0000", lineHeight: "1.1" }}>
+                  {vacanciesText}
+                </span>
               </div>
 
-              {/* Headline Title */}
-              <div
-                style={{
-                  fontSize: "46px",
-                  color: "#ffffff",
-                  fontWeight: "900",
-                  lineHeight: "1.25",
-                  letterSpacing: "-0.5px"
-                }}
-              >
-                {displayTitle}
-              </div>
-
-              {/* Source Tag info */}
               <div
                 style={{
                   display: "flex",
-                  fontSize: "16px",
-                  color: "#94a3b8",
-                  fontWeight: "600",
-                  marginTop: "20px"
+                  alignSelf: "flex-start",
+                  border: "4px double #00C853",
+                  borderRadius: "10px",
+                  padding: "8px 30px",
+                  backgroundColor: "#FFFF00",
+                  boxShadow: "5px 5px 0px #000000"
                 }}
               >
-                {`Department: ${source}`}
+                <span style={{ fontSize: "48px", fontWeight: "900", color: "#000000", lineHeight: "1.1" }}>
+                  {eligibilityText}
+                </span>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  alignSelf: "flex-start",
+                  backgroundColor: "#DCFCE7",
+                  border: "3px solid #22C55E",
+                  borderRadius: "32px",
+                  padding: "8px 40px",
+                  boxShadow: "5px 5px 0px #000000"
+                }}
+              >
+                <span style={{ fontSize: "38px", fontWeight: "800", color: "#991B1B", lineHeight: "1.1" }}>
+                  {dateText}
+                </span>
               </div>
             </div>
 
-            {/* Right Card Panel (Stats Panel) */}
             <div
               style={{
                 display: "flex",
-                flexDirection: "column",
-                width: "360px",
-                backgroundColor: "rgba(255, 255, 255, 0.02)",
-                border: "1.5px solid rgba(255, 255, 255, 0.07)",
-                borderRadius: "24px",
-                padding: "26px",
-                gap: "16px"
+                width: "380px",
+                justifyContent: "center",
+                alignItems: "center"
               }}
             >
-              {/* Vacancies */}
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <span style={{ fontSize: "12px", fontWeight: "700", color: "#64748b", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>Vacancies</span>
-                <span style={{ fontSize: "26px", fontWeight: "900", color: "#facc15" }}>{vacancies}</span>
-              </div>
+              <div
+                style={{
+                  width: "320px",
+                  height: "350px",
+                  backgroundColor: "#FFFFFF",
+                  border: "4px solid #000000",
+                  borderRadius: "16px",
+                  boxShadow: "10px 10px 0px #000000",
+                  display: "flex",
+                  flexDirection: "column",
+                  position: "relative",
+                  overflow: "hidden"
+                }}
+              >
+                <div
+                  style={{
+                    backgroundColor: "#FF0000",
+                    height: "60px",
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderBottom: "4px solid #000000"
+                  }}
+                >
+                  <span style={{ fontSize: "34px", fontWeight: "900", color: "#FFFFFF" }}>
+                    Notification
+                  </span>
+                </div>
 
-              <div style={{ height: "1px", backgroundColor: "rgba(255, 255, 255, 0.06)", width: "100%" }} />
+                <div
+                  style={{
+                    padding: "15px 15px",
+                    display: "flex",
+                    flexDirection: "column",
+                    flexGrow: 1
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "18px",
+                      fontWeight: "800",
+                      color: "#000000",
+                      textAlign: "center",
+                      marginBottom: "15px",
+                      borderBottom: "2px solid #E2E8F0",
+                      paddingBottom: "5px"
+                    }}
+                  >
+                    \\u0939\\u0947\\u0924\\u0941 \\u0906\\u0935\\u0947\\u0926\\u0928-\\u092a\\u0924\\u094d\\u0930
+                  </span>
+                  {/* Lines representing standard form */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    <div style={{ width: "120px", height: "4px", backgroundColor: "#CBD5E1" }} />
+                    <div style={{ width: "150px", height: "4px", backgroundColor: "#CBD5E1" }} />
+                    <div style={{ width: "130px", height: "4px", backgroundColor: "#CBD5E1" }} />
+                    <div style={{ width: "100px", height: "4px", backgroundColor: "#CBD5E1" }} />
+                    <div style={{ width: "140px", height: "4px", backgroundColor: "#CBD5E1" }} />
+                  </div>
 
-              {/* Qualifications */}
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <span style={{ fontSize: "12px", fontWeight: "700", color: "#64748b", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>Eligibility</span>
-                <span style={{ fontSize: "20px", fontWeight: "800", color: "#e2e8f0" }}>
-                  {qualifications.join(", ")}
-                </span>
-              </div>
-
-              <div style={{ height: "1px", backgroundColor: "rgba(255, 255, 255, 0.06)", width: "100%" }} />
-
-              {/* Last Date */}
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <span style={{ fontSize: "12px", fontWeight: "700", color: "#64748b", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>Deadline</span>
-                <span style={{ fontSize: "20px", fontWeight: "850", color: "#f87171" }}>
-                  {lastDateText}
-                </span>
+                  {/* Passport Photo Outline with realistic generated photo */}
+                  {photoBase64 && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: "20px",
+                        right: "20px",
+                        width: "84px",
+                        height: "105px",
+                        border: "3px solid #000000",
+                        backgroundColor: "#F1F5F9",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        overflow: "hidden"
+                      }}
+                    >
+                      <img
+                        src={photoBase64}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover"
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-
-          {/* Bottom Footer Line */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              width: "100%",
-              borderTop: "1px solid rgba(255, 255, 255, 0.05)",
-              paddingTop: "24px",
-              marginTop: "20px",
-              zIndex: 10
-            }}
-          >
-            <span style={{ fontSize: "14px", fontWeight: "500", color: "#475569" }}>
-              Get verified notification alerts directly from official bulletins.
-            </span>
-            <span style={{ fontSize: "14px", fontWeight: "700", color: "#3b82f6" }}>
-              railwayadmitcard.online
-            </span>
           </div>
         </div>
       ),
       {
         width: 1200,
-        height: 630
+        height: 630,
+        fonts: [
+          {
+            name: "Khand",
+            data: fontData,
+            style: "normal",
+            weight: 700
+          }
+        ]
       }
     );
   } catch (error) {
@@ -288,3 +516,4 @@ export async function GET(request: NextRequest) {
     return new Response("Failed to generate image", { status: 500 });
   }
 }
+
