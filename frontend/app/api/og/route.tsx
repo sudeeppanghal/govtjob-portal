@@ -8,11 +8,11 @@ let cachedFontData: ArrayBuffer | null = null;
 let cachedEmblemBase64: string | null = null;
 let cachedPhotoBase64: string | null = null;
 
-async function getFontData() {
+async function getFontData(origin: string) {
   if (cachedFontData) return cachedFontData;
   
   try {
-    const fontUrl = new URL("../../../public/fonts/Khand-Bold.ttf", import.meta.url);
+    const fontUrl = `${origin}/fonts/Khand-Bold.ttf`;
     const res = await fetch(fontUrl);
     if (res.ok) {
       cachedFontData = await res.arrayBuffer();
@@ -27,11 +27,11 @@ async function getFontData() {
   return cachedFontData;
 }
 
-async function getEmblemData() {
+async function getEmblemData(origin: string) {
   if (cachedEmblemBase64) return cachedEmblemBase64;
   
   try {
-    const emblemUrl = new URL("../../../public/emblem.png", import.meta.url);
+    const emblemUrl = `${origin}/emblem.png`;
     const res = await fetch(emblemUrl);
     if (res.ok) {
       const buffer = await res.arrayBuffer();
@@ -57,11 +57,11 @@ async function getEmblemData() {
   return "";
 }
 
-async function getPhotoData() {
+async function getPhotoData(origin: string) {
   if (cachedPhotoBase64) return cachedPhotoBase64;
   
   try {
-    const photoUrl = new URL("../../../public/passport_photo.png", import.meta.url);
+    const photoUrl = `${origin}/passport_photo.png`;
     const res = await fetch(photoUrl);
     if (res.ok) {
       const buffer = await res.arrayBuffer();
@@ -81,14 +81,14 @@ function extractHindiTitle(fullTitle: string, category: string, source: string):
     const candidate = parenMatch[1].trim();
     if (/[\u0900-\u097F]/.test(candidate)) {
       const lower = candidate.toLowerCase();
-      if (lower !== "\\u0938\\u0930\\u0915\\u093e\\u0930\\u0940 \\u092f\\u094b\\u091c\\u0928\\u093e" && lower !== "\\u0938\\u094d\\u0915\\u0949\\u0932\\u0930\\u0936\\u093f\\u092a" && lower !== "\\u0938\\u092c\\u0938\\u0947 \\u092c\\u0947\\u0938\\u094d\\u091f \\u1f525" && lower !== "\\u0938\\u0930\\u0915\\u093e\\u0930\\u0940 \\u0928\\u094c\\u0915\\u0930\\u0940 \\u092d\\u0930\\u094d\\u0924\\u0940") {
+      if (lower !== "\u0938\u0930\u0915\u093e\u0930\u0940 \u092f\u094b\u091c\u0928\u093e" && lower !== "\u0938\u094d\u0915\u0949\u0932\u0930\u0936\u093f\u092a" && lower !== "\u0938\u092c\u0938\u0947 \u092c\u0947\u0938\u094d\u091f \u1f525" && lower !== "\u0938\u0930\u0915\u093e\u0930\u0940 \u0928\u094c\u0915\u0930\u0940 \u092d\u0930\u094d\u0924\u0940") {
         extracted = candidate;
       }
     }
   }
 
   if (!extracted) {
-    const devanagariMatches = fullTitle.match(/[\u0900-\u097F][\u0900-\u097F\s\d\\u0966-\\u096f\-:|\\u2014,()]+/g);
+    const devanagariMatches = fullTitle.match(/[\u0900-\u097F][\u0900-\u097F\s\d\u0966-\u096f\-:|\u2014,()]+/g);
     if (devanagariMatches) {
       const longest = devanagariMatches.reduce((a, b) => a.length > b.length ? a : b, "");
       if (longest.trim().length > 5) {
@@ -101,21 +101,21 @@ function extractHindiTitle(fullTitle: string, category: string, source: string):
     const cleanSource = source.replace(/blog|feed/gi, "").trim();
     const catLower = category.toLowerCase();
     if (catLower.includes("job")) {
-      extracted = `${cleanSource} \\u0938\\u0930\\u0915\\u093e\\u0930\\u0940 \\u092d\\u0930\\u094d\\u0924\\u0940`;
+      extracted = `${cleanSource} \u0938\u0930\u0915\u093e\u0930\u0940 \u092d\u0930\u094d\u0924\u0940`;
     } else if (catLower.includes("yojana")) {
-      extracted = `${cleanSource} \\u0938\\u0930\\u0915\\u093e\\u0930\\u0940 \\u092f\\u094b\\u091c\\u0928\\u093e`;
+      extracted = `${cleanSource} \u0938\u0930\u0915\u093e\u0930\u0940 \u092f\u094b\u091c\u0928\u093e`;
     } else if (catLower.includes("admit")) {
-      extracted = `${cleanSource} \\u090f\\u0921\\u092e\\u093f\\u091f \\u0915\\u093e\\u0930\\u094d\\u0921`;
+      extracted = `${cleanSource} \u090f\u0921\u092e\u093f\u091f \u0915\u093e\u0930\u094d\u0921`;
     } else if (catLower.includes("result")) {
-      extracted = `${cleanSource} \\u092a\\u0930\\u0940\\u0915\\u094d\\u0937\\u093e \\u092a\\u0930\\u093f\\u0923\\u093e\\u092e`;
+      extracted = `${cleanSource} \u092a\u0930\u0940\u0915\u094d\u0937\u093e \u092a\u0930\u093f\u0923\u093e\u092e`;
     } else if (catLower.includes("key")) {
-      extracted = `${cleanSource} \\u0909\\u0924\\u094d\\u0924\\u0930 \\u0915\\u0941\\u0902\\u091c\\u0940`;
+      extracted = `${cleanSource} \u0909\u0924\u094d\u0924\u0930 \u0915\u0941\u0902\u091c\u0940`;
     } else {
-      extracted = `${cleanSource} \\u0928\\u092f\\u093e \\u0905\\u092a\\u0921\\u0947\\u091f`;
+      extracted = `${cleanSource} \u0928\u092f\u093e \u0905\u092a\u0921\u0947\u091f`;
     }
   }
 
-  extracted = extracted.replace(/^[\s\-:|\\u2014,]+|[\s\-:|\\u2014,]+$/g, "").trim();
+  extracted = extracted.replace(/^[\s\-:|\u2014,]+|[\s\-:|\u2014,]+$/g, "").trim();
 
   const yearMatch = fullTitle.match(/\b(202[4-9]|2030)\b/);
   const year = yearMatch ? yearMatch[1] : new Date().getFullYear().toString();
@@ -131,19 +131,19 @@ function getSubBannerText(category: string, source: string): string {
   const cleanSource = source.replace(/blog|feed/gi, "").trim();
   
   if (catLower.includes("job") || catLower === "jobs") {
-    return `${cleanSource} \\u0915\\u0947 \\u092a\\u0926\\u094b\\u0902 \\u092a\\u0930 \\u0938\\u0940\\u0927\\u0940 \\u092d\\u0930\\u094d\\u0924\\u0940`;
+    return `${cleanSource} \u0915\u0947 \u092a\u0926\u094b\u0902 \u092a\u0930 \u0938\u0940\u0927\u0940 \u092d\u0930\u094d\u0924\u0940`;
   } else if (catLower.includes("yojana")) {
-    return `\\u092f\\u094b\\u091c\\u0928\\u093e \\u0915\\u093e \\u092a\\u0942\\u0930\\u093e \\u0935\\u093f\\u0935\\u0930\\u0923 \\u0914\\u0930 \\u0911\\u0928\\u0932\\u093e\\u0907\\u0928 \\u0906\\u0935\\u0947\\u0926\\u0928`;
+    return `\u092f\u094b\u091c\u0928\u093e \u0915\u093e \u092a\u0942\u0930\u093e \u0935\u093f\u0935\u0930\u0923 \u0914\u0930 \u0911\u0928\u0932\u093e\u0907\u0928 \u0906\u0935\u0947\u0926\u0928`;
   } else if (catLower.includes("admit")) {
-    return `\\u092a\\u0930\\u0940\\u0915\\u094d\\u0937\\u093e \\u0924\\u093f\\u0925\\u093f \\u0914\\u0930 \\u090f\\u0921\\u092e\\u093f\\u091f \\u0915\\u093e\\u0930\\u094d\\u0921 \\u0921\\u093e\\u0909\\u0928\\u0932\\u094b\\u0921 \\u0932\\u093f\\u0902\\u0915`;
+    return `\u092a\u0930\u0940\u0915\u094d\u0937\u093e \u0924\u093f\u0925\u093f \u0914\u0930 \u090f\u0921\u092e\u093f\u091f \u0915\u093e\u0930\u094d\u0921 \u0921\u093e\u0909\u0928\u0932\u094b\u0921 \u0932\u093f\u0902\u0915`;
   } else if (catLower.includes("result")) {
-    return `\\u092a\\u0930\\u0940\\u0915\\u094d\\u0937\\u093e \\u092a\\u0930\\u093f\\u0923\\u093e\\u092e \\u0914\\u0930 \\u0915\\u091f-\\u0911\\u092b \\u092e\\u0947\\u0930\\u093f\\u091f \\u0932\\u093f\\u0938\\u094d\\u091f`;
+    return `\u092a\u0930\u0940\u0915\u094d\u0937\u093e \u092a\u0930\u093f\u0923\u093e\u092e \u0914\u0930 \u0915\u091f-\u0911\u092b \u092e\u0947\u0930\u093f\u091f \u0932\u093f\u0938\u094d\u091f`;
   } else if (catLower.includes("key")) {
-    return `\\u0906\\u0927\\u093f\\u0915\\u093e\\u0930\\u093f\\u0915 \\u0909\\u0924\\u094d\\u0924\\u0930 \\u0915\\u0941\\u0902\\u091c\\u0940 \\u092f\\u0939\\u093e\\u0901 \\u0938\\u0947 \\u0921\\u093e\\u0909\\u0928\\u0932\\u094b\\u0921 \\u0915\\u0930\\u0947\\u0902`;
+    return `\u0906\u0927\u093f\u0915\u093e\u0930\u093f\u0915 \u0909\u0924\u094d\u0924\u0930 \u0915\u0941\u0902\u091c\u0940 \u092f\u0939\u093e\u0901 \u0938\u0947 \u0921\u093e\u0909\u0928\u0932\u094b\u0921 \u0915\u0930\u0947\u0902`;
   } else if (catLower.includes("scholarship")) {
-    return `\\u091b\\u093e\\u0924\\u094d\\u0930\\u0935\\u0943\\u0924\\u094d\\u0924\\u093f \\u0915\\u0947 \\u0932\\u093f\\u090f \\u0911\\u0928\\u0932\\u093e\\u0907\\u0928 \\u0906\\u0935\\u0947\\u0926\\u0928 \\u092a\\u094d\\u0930\\u0915\\u094d\\u0930\\u093f\\u092f\\u093e`;
+    return `\u091b\u093e\u0924\u094d\u0930\u0935\u0943\u0924\u094d\u0924\u093f \u0915\u0947 \u0932\u093f\u090f \u0911\u0928\u0932\u093e\u0907\u0928 \u0906\u0935\u0947\u0926\u0928 \u092a\u094d\u0930\u0915\u094d\u0930\u093f\u092f\u093e`;
   }
-  return `\\u0928\\u092f\\u093e \\u0928\\u094b\\u091f\\u093f\\u092b\\u093f\\u0915\\u0947\\u0936\\u0928 \\u0914\\u0930 \\u0906\\u0935\\u0947\\u0926\\u0928 \\u0915\\u0940 \\u092a\\u0942\\u0930\\u0940 \\u091c\\u093e\\u0928\\u0915\\u093e\\u0930\\u0940`;
+  return `\u0928\u092f\u093e \u0928\u094b\u091f\u093f\u092b\u093f\u0915\u0947\u0936\u0928 \u0914\u0930 \u0906\u0935\u0947\u0926\u0928 \u0915\u0940 \u092a\u0942\u0930\u0940 \u091c\u093e\u0928\u0915\u093e\u0930\u0940`;
 }
 
 function translateQualifications(quals: string[], category: string): string {
@@ -155,23 +155,23 @@ function translateQualifications(quals: string[], category: string): string {
 
   if (!hasValidQual) {
     if (catLower.includes("job") || catLower === "jobs") {
-      return "10\\u0935\\u0940\\u0902, 12\\u0935\\u0940\\u0902, \\u0917\\u094d\\u0930\\u0947\\u091c\\u0941\\u090f\\u091f \\u092a\\u093e\\u0938";
+      return "10\u0935\u0940\u0902, 12\u0935\u0940\u0902, \u0917\u094d\u0930\u0947\u091c\u0941\u090f\u091f \u092a\u093e\u0938";
     }
-    return "\\u092f\\u094b\\u0917\\u094d\\u092f\\u0924\\u093e: \\u0928\\u094b\\u091f\\u093f\\u092b\\u093f\\u0915\\u0947\\u0936\\u0928 \\u0926\\u0947\\u0916\\u0947\\u0902";
+    return "\u092f\u094b\u0917\u094d\u092f\u0924\u093e: \u0928\u094b\u091f\u093f\u092b\u093f\u0915\u0947\u0936\u0928 \u0926\u0947\u0916\u0947\u0902";
   }
   
   const map: Record<string, string> = {
-    "10th": "10\\u0935\\u0940\\u0902 \\u092a\\u093e\\u0938",
-    "12th": "12\\u0935\\u0940\\u0902 \\u092a\\u093e\\u0938",
-    "graduate": "\\u0917\\u094d\\u0930\\u0947\\u091c\\u0941\\u090f\\u091f \\u092a\\u093e\\u0938",
-    "graduation": "\\u0917\\u094d\\u0930\\u0947\\u091c\\u0941\\u090f\\u091f \\u092a\\u093e\\u0938",
-    "iti": "ITI \\u092a\\u093e\\u0938",
-    "diploma": "\\u0921\\u093f\\u092a\\u094d\\u0932\\u094b\\u092e\\u093e \\u092a\\u093e\\u0938",
-    "post graduate": "PG \\u092a\\u093e\\u0938",
-    "pg": "PG \\u092a\\u093e\\u0938",
-    "llb": "LLB \\u092a\\u093e\\u0938",
-    "b.ed": "B.Ed \\u092a\\u093e\\u0938",
-    "b.tech": "B.Tech \\u092a\\u093e\\u0938"
+    "10th": "10\u0935\u0940\u0902 \u092a\u093e\u0938",
+    "12th": "12\u0935\u0940\u0902 \u092a\u093e\u0938",
+    "graduate": "\u0917\u094d\u0930\u0947\u091c\u0941\u090f\u091f \u092a\u093e\u0938",
+    "graduation": "\u0917\u094d\u0930\u0947\u091c\u0941\u090f\u091f \u092a\u093e\u0938",
+    "iti": "ITI \u092a\u093e\u0938",
+    "diploma": "\u0921\u093f\u092a\u094d\u0932\u094b\u092e\u093e \u092a\u093e\u0938",
+    "post graduate": "PG \u092a\u093e\u0938",
+    "pg": "PG \u092a\u093e\u0938",
+    "llb": "LLB \u092a\u093e\u0938",
+    "b.ed": "B.Ed \u092a\u093e\u0938",
+    "b.tech": "B.Tech \u092a\u093e\u0938"
   };
 
   const translated = quals.map(q => {
@@ -184,30 +184,30 @@ function translateQualifications(quals: string[], category: string): string {
 }
 
 function formatHindiDate(lastDateStr: string | null): string {
-  if (!lastDateStr) return "\\u0906\\u0935\\u0947\\u0926\\u0928 \\u0936\\u0941\\u0930\\u0942 - \\u091c\\u0932\\u094d\\u0926 \\u0915\\u0930\\u0947\\u0902";
+  if (!lastDateStr) return "\u0906\u0935\u0947\u0926\u0928 \u0936\u0941\u0930\u0942 - \u091c\u0932\u094d\u0926 \u0915\u0930\u0947\u0902";
 
   try {
     const date = new Date(lastDateStr);
-    if (isNaN(date.getTime())) return "\\u0906\\u0935\\u0947\\u0926\\u0928 \\u0936\\u0941\\u0930\\u0942 - \\u091c\\u0932\\u094d\\u0926 \\u0915\\u0930\\u0947\\u0902";
+    if (isNaN(date.getTime())) return "\u0906\u0935\u0947\u0926\u0928 \u0936\u0941\u0930\u0942 - \u091c\u0932\u094d\u0926 \u0915\u0930\u0947\u0902";
 
     const months = [
-      "\\u091c\\u0928\\u0935\\u0930\\u0940", "\\u092b\\u0930\\u0935\\u0930\\u0940", "\\u092e\\u093e\\u0930\\u094d\\u091a", "\\u0905\\u092a\\u094d\\u0930\\u0948\\u0932", "\\u092e\\u0908", "\\u091c\\u0942\\u0928",
-      "\\u091c\\u0941\\u0932\\u093e\\u0908", "\\u0905\\u0917\\u0938\\u094d\\u0924", "\\u0938\\u093f\\u0924\\u092e\\u094d\\u092c\\u0930", "\\u0905\\u0915\\u094d\\u091f\\u0942\\u092c\\u0930", "\\u0928\\u0935\\u092e\\u094d\\u092c\\u0930", "\\u0926\\u093f\\u0938\\u092e\\u094d\\u092c\\u0930"
+      "\u091c\u0928\u0935\u0930\u0940", "\u092b\u0930\u0935\u0930\u0940", "\u092e\u093e\u0930\u094d\u091a", "\u0905\u092a\u094d\u0930\u0948\u0932", "\u092e\u0908", "\u091c\u0942\u0928",
+      "\u091c\u0941\u0932\u093e\u0908", "\u0905\u0917\u0938\u094d\u0924", "\u0938\u093f\u0924\u092e\u094d\u092c\u0930", "\u0905\u0915\u094d\u091f\u0942\u092c\u0930", "\u0928\u0935\u092e\u094d\u092c\u0930", "\u0926\u093f\u0938\u092e\u094d\u092c\u0930"
     ];
 
     const day = date.getDate();
     const month = months[date.getMonth()];
     const year = date.getFullYear();
 
-    return `\\u0905\\u0902\\u0924\\u093f\\u092e \\u0924\\u093f\\u0925\\u093f - ${day} ${month} ${year}`;
+    return `\u0905\u0902\u0924\u093f\u092e \u0924\u093f\u0925\u093f - ${day} ${month} ${year}`;
   } catch (e) {
-    return "\\u0906\\u0935\\u0947\\u0926\\u0928 \\u0936\\u0941\\u0930\\u0942 - \\u091c\\u0932\\u094d\\u0926 \\u0915\\u0930\\u0947\\u0902";
+    return "\u0906\u0935\u0947\u0926\u0928 \u0936\u0941\u0930\u0942 - \u091c\u0932\u094d\u0926 \u0915\u0930\u0947\u0902";
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams, origin } = new URL(request.url);
     const slug = searchParams.get("title");
     
     let source = "GOVT JOB";
@@ -248,11 +248,11 @@ export async function GET(request: NextRequest) {
     const subBannerText = getSubBannerText(category, source);
     const eligibilityText = translateQualifications(qualifications, category);
     const dateText = formatHindiDate(lastDate);
-    const vacanciesText = vacancies ? `\\u092a\\u0926 - ${vacancies}` : "\\u092c\\u095c\\u0940 \\u092d\\u0930\\u094d\\u0924\\u0940";
+    const vacanciesText = vacancies ? `\u092a\u0926 - ${vacancies}` : "\u092c\u095c\u0940 \u092d\u0930\u094d\u0924\u0940";
 
-    const fontData = await getFontData();
-    const emblemBase64 = await getEmblemData();
-    const photoBase64 = await getPhotoData();
+    const fontData = await getFontData(origin);
+    const emblemBase64 = await getEmblemData(origin);
+    const photoBase64 = await getPhotoData(origin);
 
     return new ImageResponse(
       (
@@ -454,9 +454,8 @@ export async function GET(request: NextRequest) {
                       paddingBottom: "5px"
                     }}
                   >
-                    \\u0939\\u0947\\u0924\\u0941 \\u0906\\u0935\\u0947\\u0926\\u0928-\\u092a\\u0924\\u094d\\u0930
+                    \u0939\u0947\u0924\u0941 \u0906\u0935\u0947\u0926\u0928-\u092a\u0924\u094d\u0930
                   </span>
-                  {/* Lines representing standard form */}
                   <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                     <div style={{ width: "120px", height: "4px", backgroundColor: "#CBD5E1" }} />
                     <div style={{ width: "150px", height: "4px", backgroundColor: "#CBD5E1" }} />
@@ -465,7 +464,6 @@ export async function GET(request: NextRequest) {
                     <div style={{ width: "140px", height: "4px", backgroundColor: "#CBD5E1" }} />
                   </div>
 
-                  {/* Passport Photo Outline with realistic generated photo */}
                   {photoBase64 && (
                     <div
                       style={{
@@ -516,4 +514,3 @@ export async function GET(request: NextRequest) {
     return new Response("Failed to generate image", { status: 500 });
   }
 }
-
