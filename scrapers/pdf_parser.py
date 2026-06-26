@@ -9,7 +9,7 @@ def download_file(url: str, temp_file_path: str) -> bool:
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
     }
     try:
-        response = requests.get(url, headers=headers, timeout=30, stream=True)
+        response = requests.get(url, headers=headers, timeout=30, stream=True, verify=False)
         if response.status_code == 200:
             with open(temp_file_path, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
