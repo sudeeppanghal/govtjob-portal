@@ -139,17 +139,21 @@ def process_single_notice(notice: dict) -> tuple:
     # 4. Insert Notification into Supabase
     try:
         # Dynamic OG cover image URL using Next.js Vercel OG API
-        slug = data['slug']
+        slug = data.get('slug', '')
+        if not slug:
+            print("Notice data missing slug, skipping database insert.")
+            return False, False
+            
         image_url = f"/api/og?title={slug}&source={source}&category={category}"
         
         # Run Auto-Siloing Internal Linker on article markdown
-        linked_content = inject_internal_links(data['article_content'])
+        linked_content = inject_internal_links(data.get('article_content', ''))
         
         # Determine sector
         sector = determine_sector(
             source_name=source,
-            title=data['article_title'],
-            content=data['article_content'],
+            title=data.get('article_title', ''),
+            content=data.get('article_content', ''),
             states=data.get('states', [])
         )
         
@@ -164,23 +168,27 @@ def process_single_notice(notice: dict) -> tuple:
             "source_url": url,
             "category": category,
             "title": title,
-            "article_title": data['article_title'],
+            "article_title": data.get('article_title', title),
             "slug": slug,
-            "extracted_json": data['extracted_json'],
+            "extracted_json": data.get('extracted_json', {}),
             "article_content": linked_content,
-            "meta_description": data['meta_description'],
-            "schemas": data['schemas'],
+            "meta_description": data.get('meta_description', ''),
+            "schemas": data.get('schemas', {}),
             "status": "published",
             "last_date": clean_last_date,
-            "qualifications": data['qualifications'],
-            "states": data['states'],
+            "qualifications": data.get('qualifications', []),
+            "states": data.get('states', []),
             "image_url": image_url,
             "is_updated": False,
             "sector": sector
         }
         
         supabase.table("notifications").insert(insert_data).execute()
-        print(f"Successfully published: {data['article_title']}")
+        
+        # Safe print for Windows terminal console encoding issues
+        article_title_raw = data.get('article_title', title)
+        article_title_safe = article_title_raw.encode('ascii', errors='replace').decode('ascii')
+        print(f"Successfully published: {article_title_safe}")
         
         # Submit newly published URL to Google Search Indexing API
         is_yojana = category.lower() in ["sarkari yojana", "scholarship"]

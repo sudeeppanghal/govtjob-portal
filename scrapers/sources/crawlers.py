@@ -28,6 +28,38 @@ def safe_fetch(url: str) -> str:
         print(f"Error fetching {url}: {e}")
         return ""
 
+def clean_feed_title(title: str) -> str:
+    """Removes blogger site names, URLs, and common suffixes from notice titles."""
+    if not title:
+        return ""
+    
+    # List of patterns to remove (case-insensitive)
+    patterns = [
+        r'\s*-\s*bihar\s*help\b',
+        r'\s*\|\s*bihar\s*help\b',
+        r'\s*@\s*biharhelp\.in\b',
+        r'\s*biharhelp\.in\b',
+        r'\s*bihar\s*help\b',
+        r'\s*sarkariyojnaa\.com\b',
+        r'\s*sarkariyojnaa\b',
+        r'\s*sarkari\s*yojana\b',
+        r'\s*sarkari\s*result\b',
+        r'\s*pmmodiyojana\.in\b',
+        r'\s*pmmodiyojana\b',
+        r'\s*pm\s*modi\s*yojana\b',
+    ]
+    
+    cleaned = title
+    for pat in patterns:
+        cleaned = re.sub(pat, '', cleaned, flags=re.IGNORECASE)
+        
+    # Clean up double spaces or trailing dashes/pipes/spaces
+    cleaned = re.sub(r'\s*[\-|–|—|@|:|\|]\s*$', '', cleaned).strip()
+    cleaned = re.sub(r'^\s*[\-|–|—|@|:|\|]\s*', '', cleaned).strip()
+    cleaned = re.sub(r'\s+', ' ', cleaned)
+    
+    return cleaned
+
 def scrape_upsc() -> list:
     """Scrapes UPSC active notification links from What's New."""
     url = "https://upsc.gov.in/whats-new"
@@ -289,8 +321,9 @@ def scrape_pmmodiyojana_portal() -> list:
                 if "scholarship" in title.lower() or "chhatravriti" in title.lower():
                     category = "Scholarship"
                 
+                cleaned_title = clean_feed_title(title)
                 results.append({
-                    "title": title,
+                    "title": cleaned_title,
                     "url": link_text,
                     "category": category,
                     "source": "PM Modi Yojana Portal"
@@ -327,8 +360,9 @@ def scrape_sarkariyojnaa_portal() -> list:
                 if "scholarship" in title.lower() or "chhatravriti" in title.lower():
                     category = "Scholarship"
                 
+                cleaned_title = clean_feed_title(title)
                 results.append({
-                    "title": title,
+                    "title": cleaned_title,
                     "url": link_text,
                     "category": category,
                     "source": "Sarkari Yojana Portal"
@@ -362,26 +396,77 @@ def scrape_biharhelp_portal() -> list:
             
             if title and link_text:
                 title_lower = title.lower()
+                cleaned_title = clean_feed_title(title)
                 
-                # Check if it is a genuine yojana or scholarship, filter out exam/jobs
-                is_yojana = True
+                # Determine category based on keywords
                 category = "Sarkari Yojana"
-                if "scholarship" in title_lower or "scholar" in title_lower or "chhatravriti" in title_lower or "स्कॉलरशिप" in title:
+                if any(kw in title_lower for kw in ["scholarship", "scholar", "chhatravriti", "स्कॉलरशिप"]):
                     category = "Scholarship"
-                elif any(kw in title_lower for kw in ["admit card", "admit-card", "प्रवेश पत्र", "result", "परिणाम", "vacancy", "recruitment", "bharti", "नौकरी", "job", "answer key", "उत्तर कुंजी"]):
-                    is_yojana = False
+                elif any(kw in title_lower for kw in ["admit card", "admit-card", "प्रवेश पत्र"]):
+                    category = "Admit Card"
+                elif any(kw in title_lower for kw in ["result", "परिणाम"]):
+                    category = "Result"
+                elif any(kw in title_lower for kw in ["answer key", "उत्तर कुंजी"]):
+                    category = "Answer Key"
+                elif any(kw in title_lower for kw in ["vacancy", "recruitment", "bharti", "नौकरी", "job"]):
+                    category = "Job"
                 
-                if is_yojana:
-                    results.append({
-                        "title": title,
-                        "url": link_text,
-                        "category": category,
-                        "source": "Bihar Help Portal"
-                    })
+                results.append({
+                    "title": cleaned_title,
+                    "url": link_text,
+                    "category": category,
+                    "source": "Bihar Help Portal"
+                })
     except Exception as e:
         print(f"Error parsing Bihar Help Feed: {e}")
         
     return results[:30]
+
+def scrape_sarkari_result() -> list:
+    """Scrapes latest jobs from the popular portal Sarkari Result."""
+    url = "https://www.sarkariresult.com/"
+    html = safe_fetch(url)
+    results = []
+    if not html:
+        return results
+
+    try:
+        soup = BeautifulSoup(html, 'html.parser')
+        # Find <strong>Latest Job</strong>
+        for strong in soup.find_all('strong'):
+            if strong.get_text(strip=True) == "Latest Job":
+                parent = strong.parent
+                # Traverse up to find container div containing list of jobs
+                while parent:
+                    links = parent.find_all('a', href=True)
+                    if len(links) >= 10:
+                        break
+                    parent = parent.parent
+                
+                if parent:
+                    for a in links:
+                        href = a['href']
+                        title = a.get_text(strip=True)
+                        full_url = href if href.startswith('http') else f"https://www.sarkariresult.com{href}"
+                        
+                        # Filter out general/helper links
+                        if full_url.endswith('/latestjob/') or full_url.endswith('/latestjob') or full_url.endswith('/onlineform/'):
+                            continue
+                            
+                        # Keep links containing years or state/national categories in path
+                        if any(x in full_url for x in ['/2024/', '/2025/', '/2026/', '/2027/', '/force/', '/railway/', '/upsc/', '/delhi/', '/mp/', '/upsssc/', '/ssc/', '/ibps/', '/haryana/', '/bihar/', '/rajasthan/', '/jharkhand/']):
+                            if len(title) > 10:
+                                results.append({
+                                    "title": title,
+                                    "url": full_url,
+                                    "category": "Job",
+                                    "source": "Sarkari Result"
+                                })
+                    break
+    except Exception as e:
+        print(f"Error parsing Sarkari Result: {e}")
+        
+    return results[:10]
 
 def scrape_all_sources() -> list:
     """Orchestrates all source crawlers and combines their notices."""
@@ -396,7 +481,8 @@ def scrape_all_sources() -> list:
         scrape_yojana,
         scrape_pmmodiyojana_portal,
         scrape_sarkariyojnaa_portal,
-        scrape_biharhelp_portal
+        scrape_biharhelp_portal,
+        scrape_sarkari_result
     ]
     for crawler in crawlers:
         try:
@@ -415,4 +501,5 @@ def scrape_all_sources() -> list:
             seen_urls.add(item['url'])
             deduped.append(item)
     return deduped
+
 

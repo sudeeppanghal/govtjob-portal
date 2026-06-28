@@ -54,7 +54,21 @@ def clean_json_text(text: str) -> str:
             
     return "".join(fixed_chars)
 
-def extract_with_groq(prompt: str, system_instruction: str) -> dict:
+def fill_defaults(result_json: dict, source_name: str, category: str) -> dict:
+    """Fills default values for missing keys in parsed AI output to prevent KeyErrors."""
+    if 'article_title' not in result_json:
+        result_json['article_title'] = f"{source_name} {category} Notification"
+    result_json['slug'] = clean_slug(result_json.get('slug', result_json['article_title']))
+    result_json['meta_description'] = result_json.get('meta_description', '')
+    result_json['qualifications'] = result_json.get('qualifications', [])
+    result_json['states'] = result_json.get('states', [])
+    result_json['last_date'] = result_json.get('last_date', None)
+    result_json['extracted_json'] = result_json.get('extracted_json', {})
+    result_json['article_content'] = result_json.get('article_content', '')
+    result_json['schemas'] = result_json.get('schemas', {})
+    return result_json
+
+def extract_with_groq(prompt: str, system_instruction: str, source_name: str, category: str) -> dict:
     """Uses Groq API as a fallback to extract details and generate content in JSON format."""
     groq_key = os.getenv("GROQ_API_KEY")
     if not groq_key:
@@ -93,8 +107,7 @@ def extract_with_groq(prompt: str, system_instruction: str) -> dict:
                 # Verify structure
                 if 'article_title' in result_json and 'article_content' in result_json:
                     print(f"Groq extraction successful with model {model}.")
-                    result_json['slug'] = clean_slug(result_json.get('slug', result_json['article_title']))
-                    return result_json
+                    return fill_defaults(result_json, source_name, category)
                 else:
                     print(f"Groq model {model} returned JSON, but it is missing critical fields.")
             else:
@@ -124,10 +137,11 @@ def extract_with_gemini(pdf_text: str, category: str, source_name: str) -> dict:
         "Use bullet lists and HTML-friendly Markdown tables for quick fact parsing.\n\n"
         "Style Guidelines:\n"
         "- Write in a highly engaging, professional yet conversational, human-like tone that completely bypasses AI detectors. Avoid robotic phrases like 'Furthermore', 'In summary', 'Consequently', 'Moreover', 'Crucial', 'It is important to note'. Use active verbs.\n"
-        "- For Hindi translation, use natural and popular Hindi search phrasing (e.g. use 'आवेदन कैसे करें' or 'पात्रता' rather than awkward direct translations like 'चरण-दर-चरण मार्गदर्शिका'). Ensure Hindi is grammatically flawless.\n\n"
+        "- For Hindi translation, use natural and popular Hindi search phrasing (e.g. use 'आवेदन कैसे करें' or 'पात्रता' rather than awkward direct translations like 'चरण-दर-चरण मार्गदर्शिका'). Ensure Hindi is grammatically flawless.\n"
+        "- CRITICAL: Do NOT mention any website names (such as 'Sarkari Result', 'Bihar Help', 'Sarkari Yojana Portal', 'PM Modi Yojana', etc.) in the title. If the source text comes from these portals, extract the actual recruiting government authority/organization name (like 'UPSC', 'SSC', 'BPSSC', 'Navy', 'Railway', etc.) or scheme name, and use that instead. Never include portal website names in the article title.\n\n"
         "JSON SCHEMA:\n"
         "{\n"
-        "  \"article_title\": \"SEO-optimized title using these exact formulas: [Jobs: '[Org Name] [Post Name] Recruitment 2026 - Apply Online for [Vacancy Count] Posts' (e.g. 'SSC CGL Recruitment 2026 - Apply Online for 17,727 Posts'), or if vacancy is unknown, use 'Various Posts'], [Admit Cards: '[Org Name] [Exam Name] Admit Card 2026 - Download Hall Ticket Link Active'], [Results: '[Org Name] [Exam Name] Result 2026 - Merit List, Cut Off Marks PDF'], [Answer Keys: '[Org Name] [Exam Name] Answer Key 2026 - Download PDF & Objections Link'], [Yojana: '[Scheme Name] 2026 - Online Registration, Eligibility & Beneficiary Status'], [Scholarship: '[Scholarship Name] 2026 - Online Application, Eligibility & Last Date']. Always append the relevant Hindi translation in parentheses to target bilingual queries (e.g. 'SSC CGL Recruitment 2026 - Apply Online for 17,727 Posts (एसएससी सीजीएल भर्ती 2026)')\",\n"
+        "  \"article_title\": \"SEO-optimized title using these exact formulas: [Jobs: '[Org Name] [Post Name] Recruitment 2026 - Apply Online for [Vacancy Count] Posts' (e.g. 'SSC CGL Recruitment 2026 - Apply Online for 17,727 Posts'), or if vacancy is unknown, use 'Various Posts'], [Admit Cards: '[Org Name] [Exam Name] Admit Card 2026 - Download Hall Ticket Link Active'], [Results: '[Org Name] [Exam Name] Result 2026 - Merit List, Cut Off Marks PDF'], [Answer Keys: '[Org Name] [Exam Name] Answer Key 2026 - Download PDF & Objections Link'], [Yojana: '[Scheme Name] 2026 - Online Registration, Eligibility & Beneficiary Status'], [Scholarship: '[Scholarship Name] 2026 - Online Application, Eligibility & Last Date']. Always append the relevant Hindi translation in parentheses to target bilingual queries (e.g. 'SSC CGL Recruitment 2026 - Apply Online for 17,727 Posts (एसएससी सीजीएल भर्ती 2026)'). DO NOT mention website names in the title!\",\n"
         "  \"slug\": \"clean-url-slug (e.g., 'pm-kisan-yojana-2026')\",\n"
         "  \"meta_description\": \"Compelling meta description under 160 characters containing key search keywords\",\n"
         "  \"qualifications\": [\"Array of education levels required, select from: 10th, 12th, Graduate, Post Graduate, B.Tech, ITI, Diploma, LLB, MBBS, PhD\"],\n"
@@ -228,8 +242,7 @@ def extract_with_gemini(pdf_text: str, category: str, source_name: str) -> dict:
                 
                 if 'article_title' in result_json and 'article_content' in result_json:
                     print("Gemini AI extraction successful.")
-                    result_json['slug'] = clean_slug(result_json.get('slug', result_json['article_title']))
-                    return result_json
+                    return fill_defaults(result_json, source_name, category)
                 else:
                     print("Missing critical fields in Gemini output.")
             except Exception as e:
@@ -239,9 +252,10 @@ def extract_with_gemini(pdf_text: str, category: str, source_name: str) -> dict:
 
     # 2. Try Groq Fallback
     print("Gemini keys exhausted or missing. Falling back to Groq API...")
-    groq_data = extract_with_groq(prompt, system_instruction)
+    groq_data = extract_with_groq(prompt, system_instruction, source_name, category)
     if groq_data:
         return groq_data
 
     print("All AI extraction methods failed.")
     return None
+

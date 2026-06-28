@@ -77,6 +77,31 @@ def generate_fallback_article(pdf_text: str, category: str, source_name: str, so
     last_date = parse_last_date(pdf_text)
     dates = extract_dates(pdf_text)
     
+    # Clean the source name to find if it's a website and extract a proper authority
+    website_names = [
+        "sarkari result", "sarkariyojnaa", "sarkari yojana", "pm modi yojana", "pmmodiyojana",
+        "bihar help", "biharhelp", "employment news"
+    ]
+    is_website = any(web in source_name.lower() for web in website_names)
+    
+    authority = ""
+    if is_website:
+        # Search for common Indian exam/recruitment boards in the notice title
+        boards = ["UPSC", "SSC", "IBPS", "RRB", "SBI", "BPSSC", "UPPSC", "HSSC", "RSSB", "RPSC", "DSSSB", "MPPSC", "CGPSC", "NIACL", "NBEMS", "CSIR", "LIC", "DRDO", "ISRO", "IOCL", "ONGC"]
+        for board in boards:
+            if re.search(r'\b' + board + r'\b', title, re.IGNORECASE):
+                authority = board
+                break
+        if not authority:
+            # Fallback to the first capitalized acronym of length >= 3 in the title
+            words = re.findall(r'\b[A-Z]{3,6}\b', title)
+            if words:
+                authority = words[0]
+            else:
+                authority = "Government"
+    else:
+        authority = source_name
+
     # Generate clean slugs and SEO metadata
     # Use title if long enough, otherwise fallback to source+category+url hash
     clean_title = re.sub(r'[^a-zA-Z0-9\s-]', '', title).strip().replace(' ', '-').lower()
@@ -88,7 +113,7 @@ def generate_fallback_article(pdf_text: str, category: str, source_name: str, so
     else:
         import hashlib
         url_hash = hashlib.md5(source_url.encode('utf-8')).hexdigest()[:6]
-        slug_base = f"{source_name}-{category}-{datetime.now().year}-{url_hash}"
+        slug_base = f"{authority}-{category}-{datetime.now().year}-{url_hash}"
         slug_base = re.sub(r'[^a-zA-Z0-9\s-]', '', slug_base).strip().replace(' ', '-').lower()
         slug_base = re.sub(r'-+', '-', slug_base)
     
@@ -113,40 +138,40 @@ def generate_fallback_article(pdf_text: str, category: str, source_name: str, so
 
     if cat_lower == 'job':
         vac_str = f"for {vacancies}" if "refer" not in vacancies.lower() else "for Various Posts"
-        article_title = f"{source_name} Recruitment {year} - Apply Online {vac_str} ({hindi_suffix} {year})"
+        article_title = f"{authority} Recruitment {year} - Apply Online {vac_str} ({hindi_suffix} {year})"
     elif cat_lower == 'admit card':
-        article_title = f"{source_name} Admit Card {year} - Download Hall Ticket Link Active ({hindi_suffix})"
+        article_title = f"{authority} Admit Card {year} - Download Hall Ticket Link Active ({hindi_suffix})"
     elif cat_lower == 'result':
-        article_title = f"{source_name} Result {year} - Merit List, Cut Off Marks PDF ({hindi_suffix})"
+        article_title = f"{authority} Result {year} - Merit List, Cut Off Marks PDF ({hindi_suffix})"
     elif cat_lower == 'answer key':
-        article_title = f"{source_name} Answer Key {year} - Download PDF & Objections Link ({hindi_suffix})"
+        article_title = f"{authority} Answer Key {year} - Download PDF & Objections Link ({hindi_suffix})"
     elif cat_lower == 'sarkari yojana':
         article_title = f"{clean_feed_title} {year} - Online Registration, Eligibility & Beneficiary Status (सरकारी योजना)"
     elif cat_lower == 'scholarship':
         article_title = f"{clean_feed_title} {year} - Online Application, Eligibility & Last Date (स्कॉलरशिप)"
     else:
-        article_title = f"{source_name} {category} {year} Notification Out ({hindi_suffix})"
+        article_title = f"{authority} {category} {year} Notification Out ({hindi_suffix})"
 
-    meta_desc = f"Latest {source_name} {category} notification issued ({hindi_suffix}). Check vacancy details, eligibility, application fee, and dates. Apply before {last_date or 'closing date'}."
+    meta_desc = f"Latest {authority} {category} notification issued ({hindi_suffix}). Check vacancy details, eligibility, application fee, and dates. Apply before {last_date or 'closing date'}."
     
     # Pre-designed Markdown bilingual template
     article_content = f"""# {article_title}
 
 # Hindi Version / हिंदी में पूरी जानकारी
 
-**{source_name}** ने **{category} ({hindi_suffix})** के लिए आधिकारिक अधिसूचना जारी की है। इस पृष्ठ में पात्रता मानदंड, रिक्तियों, महत्वपूर्ण तिथियों, चयन प्रक्रिया और आवेदन निर्देशों से संबंधित सभी महत्वपूर्ण विवरण शामिल हैं। इच्छुक उम्मीदवार नीचे दिए गए सीधे आधिकारिक लिंक पा सकते हैं।
+**{authority}** ने **{category} ({hindi_suffix})** के लिए आधिकारिक अधिसूचना जारी की है। इस पृष्ठ में पात्रता मानदंड, रिक्तियों, महत्वपूर्ण तिथियों, चयन प्रक्रिया और आवेदन निर्देशों से संबंधित सभी महत्वपूर्ण विवरण शामिल हैं। इच्छुक उम्मीदवार नीचे दिए गए सीधे आधिकारिक लिंक पा सकते हैं।
 
 ## महत्वपूर्ण अवलोकन
 भर्ती विवरण का एक संक्षिप्त सारांश नीचे दिया गया है:
 
 | विवरण | जानकारी |
 | --- | --- |
-| **संगठन का नाम** | {source_name} |
+| **संगठन का नाम** | {authority} |
 | **अधिसूचना श्रेणी** | {category} ({hindi_suffix}) |
 | **कुल रिक्तियां (पदों की संख्या)** | {vacancies} |
 | **शैक्षणिक योग्यता** | {", ".join(quals)} |
 | **आवेदन करने की अंतिम तिथि** | {last_date or "पीडीएफ देखें"} |
-| **आधिकारिक वेबसाइट** | [{source_name} Official Site]({source_url}) |
+| **आधिकारिक वेबसाइट** | [{authority} Official Site]({source_url}) |
 
 ## महत्वपूर्ण तिथियां
 उम्मीदवारों को निम्नलिखित महत्वपूर्ण घटनाओं और तिथियों को नोट करना चाहिए:
@@ -212,19 +237,19 @@ def generate_fallback_article(pdf_text: str, category: str, source_name: str, so
 
 # English Version
 
-The **{source_name}** has released the official notification for **{category}**. This page contains all the important details regarding eligibility criteria, vacancies, important dates, selection process, and application instructions. Interested candidates can find the direct official links below.
+The **{authority}** has released the official notification for **{category}**. This page contains all the important details regarding eligibility criteria, vacancies, important dates, selection process, and application instructions. Interested candidates can find the direct official links below.
 
 ## Important Overview
-Below is a summarized overview of the {source_name} recruitment details:
+Below is a summarized overview of the {authority} recruitment details:
 
 | Attribute | Details |
 | --- | --- |
-| **Organization** | {source_name} |
+| **Organization** | {authority} |
 | **Notification Category** | {category} |
 | **Total Vacancies** | {vacancies} |
 | **Qualifications Required** | {", ".join(quals)} |
 | **Last Date to Apply** | {last_date or "Refer to PDF"} |
-| **Official Website** | [{source_name} Official Site]({source_url}) |
+| **Official Website** | [{authority} Official Site]({source_url}) |
 
 ## Important Dates
 Candidates should note down the following important events and dates:
