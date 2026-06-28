@@ -6,10 +6,56 @@ import PrintButton from "../../../components/PrintButton";
 import ViewTracker from "../../../components/ViewTracker";
 import { marked } from "marked";
 
+import { Metadata } from "next";
+
 interface PageProps {
   params: Promise<{
     slug: string;
   }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const { data: notification } = await supabase
+    .from("notifications")
+    .select("article_title, meta_description")
+    .eq("slug", slug)
+    .single();
+
+  if (!notification) {
+    return {
+      title: "Notification Not Found",
+      description: "This government notification could not be found."
+    };
+  }
+
+  const title = notification.article_title;
+  const description = notification.meta_description || `Read full details about ${notification.article_title}, eligibility criteria, application process, and important dates.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `https://railwayadmitcard.online/jobs/${slug}`,
+      type: "article",
+      images: [
+        {
+          url: `https://railwayadmitcard.online/api/og?title=${slug}`,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [`https://railwayadmitcard.online/api/og?title=${slug}`],
+    },
+  };
 }
 
 export default async function JobDetail({ params }: PageProps) {
