@@ -47,6 +47,15 @@ def clean_feed_title(title: str) -> str:
         r'\s*pmmodiyojana\.in\b',
         r'\s*pmmodiyojana\b',
         r'\s*pm\s*modi\s*yojana\b',
+        r'\s*-\s*haryana\s*jobs\b',
+        r'\s*\|\s*haryana\s*jobs\b',
+        r'\s*haryana\s*jobs\b',
+        r'\s*-\s*indgovtjobs\b',
+        r'\s*\|\s*indgovtjobs\b',
+        r'\s*indgovtjobs\b',
+        r'\s*-\s*govtjobsblog\b',
+        r'\s*\|\s*govtjobsblog\b',
+        r'\s*govtjobsblog\b',
     ]
     
     cleaned = title
@@ -468,6 +477,158 @@ def scrape_sarkari_result() -> list:
         
     return results[:10]
 
+def scrape_haryanajobs_portal() -> list:
+    """Scrapes haryanajobs.org RSS feed for government jobs and notifications."""
+    url = "https://haryanajobs.org/feed/"
+    html = safe_fetch(url)
+    results = []
+    if not html:
+        return results
+
+    try:
+        soup = BeautifulSoup(html, 'html.parser')
+        items = soup.find_all('item')
+        for item in items:
+            title = item.find('title').text if item.find('title') else ''
+            
+            # Extract link
+            link_text = ''
+            for child in item.children:
+                if child.name == 'link':
+                    link_text = child.text
+                    if not link_text and child.next_sibling:
+                        link_text = child.next_sibling.strip()
+            
+            if title and link_text:
+                title_lower = title.lower()
+                cleaned_title = clean_feed_title(title)
+                
+                # Determine category
+                category = "Job"
+                if any(kw in title_lower for kw in ["admit card", "admit-card", "hall ticket", "hall-ticket", "roll number"]):
+                    category = "Admit Card"
+                elif any(kw in title_lower for kw in ["result", "merit list", "cut off", "cutoff"]):
+                    category = "Result"
+                elif any(kw in title_lower for kw in ["answer key", "response sheet", "objection"]):
+                    category = "Answer Key"
+                elif any(kw in title_lower for kw in ["scholarship", "chhatravriti"]):
+                    category = "Scholarship"
+                elif any(kw in title_lower for kw in ["yojana", "scheme"]):
+                    category = "Sarkari Yojana"
+                
+                results.append({
+                    "title": cleaned_title,
+                    "url": link_text,
+                    "category": category,
+                    "source": "Haryana Jobs"
+                })
+    except Exception as e:
+        print(f"Error parsing Haryana Jobs Feed: {e}")
+        
+    return results[:30]
+
+def scrape_indgovtjobs_portal() -> list:
+    """Scrapes indgovtjobs.in Atom feed for government jobs."""
+    url = "https://www.indgovtjobs.in/feeds/posts/default"
+    html = safe_fetch(url)
+    results = []
+    if not html:
+        return results
+
+    try:
+        soup = BeautifulSoup(html, 'html.parser')
+        entries = soup.find_all('entry')
+        for entry in entries:
+            title = entry.find('title').text if entry.find('title') else ''
+            
+            # Link is usually in alternate relation
+            link_text = ''
+            link_tag = entry.find('link', rel='alternate')
+            if link_tag and link_tag.has_attr('href'):
+                link_text = link_tag['href']
+            else:
+                link_tag = entry.find('link')
+                if link_tag and link_tag.has_attr('href'):
+                    link_text = link_tag['href']
+            
+            if title and link_text:
+                title_lower = title.lower()
+                cleaned_title = clean_feed_title(title)
+                
+                # Determine category
+                category = "Job"
+                if any(kw in title_lower for kw in ["admit card", "admit-card", "hall ticket", "hall-ticket"]):
+                    category = "Admit Card"
+                elif any(kw in title_lower for kw in ["result", "merit list", "cut off", "cutoff"]):
+                    category = "Result"
+                elif any(kw in title_lower for kw in ["answer key", "response sheet", "objection"]):
+                    category = "Answer Key"
+                elif any(kw in title_lower for kw in ["scholarship", "chhatravriti"]):
+                    category = "Scholarship"
+                elif any(kw in title_lower for kw in ["yojana", "scheme"]):
+                    category = "Sarkari Yojana"
+                
+                results.append({
+                    "title": cleaned_title,
+                    "url": link_text,
+                    "category": category,
+                    "source": "IndGovtJobs"
+                })
+    except Exception as e:
+        print(f"Error parsing IndGovtJobs Feed: {e}")
+        
+    return results[:30]
+
+def scrape_govtjobsblog_portal() -> list:
+    """Scrapes govtjobsblog.in RSS feed for government jobs."""
+    url = "https://www.govtjobsblog.in/feed/"
+    html = safe_fetch(url)
+    results = []
+    if not html:
+        return results
+
+    try:
+        soup = BeautifulSoup(html, 'html.parser')
+        items = soup.find_all('item')
+        for item in items:
+            title = item.find('title').text if item.find('title') else ''
+            
+            # Extract link
+            link_text = ''
+            for child in item.children:
+                if child.name == 'link':
+                    link_text = child.text
+                    if not link_text and child.next_sibling:
+                        link_text = child.next_sibling.strip()
+            
+            if title and link_text:
+                title_lower = title.lower()
+                cleaned_title = clean_feed_title(title)
+                
+                # Determine category
+                category = "Job"
+                if any(kw in title_lower for kw in ["admit card", "admit-card", "hall ticket", "hall-ticket"]):
+                    category = "Admit Card"
+                elif any(kw in title_lower for kw in ["result", "merit list", "cut off", "cutoff"]):
+                    category = "Result"
+                elif any(kw in title_lower for kw in ["answer key", "response sheet", "objection"]):
+                    category = "Answer Key"
+                elif any(kw in title_lower for kw in ["scholarship", "chhatravriti"]):
+                    category = "Scholarship"
+                elif any(kw in title_lower for kw in ["yojana", "scheme"]):
+                    category = "Sarkari Yojana"
+                
+                results.append({
+                    "title": cleaned_title,
+                    "url": link_text,
+                    "category": category,
+                    "source": "GovtJobsBlog"
+                })
+    except Exception as e:
+        print(f"Error parsing GovtJobsBlog Feed: {e}")
+        
+    return results[:30]
+
 def scrape_all_sources() -> list:
     """Orchestrates all source crawlers and combines their notices."""
     all_notices = []
@@ -482,7 +643,10 @@ def scrape_all_sources() -> list:
         scrape_pmmodiyojana_portal,
         scrape_sarkariyojnaa_portal,
         scrape_biharhelp_portal,
-        scrape_sarkari_result
+        scrape_sarkari_result,
+        scrape_haryanajobs_portal,
+        scrape_indgovtjobs_portal,
+        scrape_govtjobsblog_portal
     ]
     for crawler in crawlers:
         try:
