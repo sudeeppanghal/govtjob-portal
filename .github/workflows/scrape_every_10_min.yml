@@ -2,7 +2,7 @@ name: Scrape Government Notifications
 
 on:
   schedule:
-    - cron: '25 * * * *' # Run every hour (at minute 25)
+    - cron: '*/10 * * * *' # Run every 10 minutes
   workflow_dispatch: # Enable manual run from GitHub UI
 
 jobs:
