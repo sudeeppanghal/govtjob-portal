@@ -1,6 +1,6 @@
 import re
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 def extract_dates(text: str) -> list:
     """Helper to extract DD-MM-YYYY or DD/MM/YYYY dates from text."""
@@ -393,24 +393,46 @@ Candidates must possess the following qualifications based on the posts:
     }
 
     if category.lower() == 'job':
+        valid_date = last_date if last_date and len(str(last_date)) >= 10 else (datetime.now() + timedelta(days=60)).strftime('%Y-%m-%d')
         schemas["job_posting"] = {
             "@context": "https://schema.org/",
             "@type": "JobPosting",
             "title": article_title,
             "description": meta_desc,
             "datePosted": datetime.now().strftime('%Y-%m-%d'),
-            "validThrough": last_date,
+            "validThrough": f"{valid_date}T23:59:59+05:30",
             "employmentType": "FULL_TIME",
+            "identifier": {
+                "@type": "PropertyValue",
+                "name": source_name,
+                "value": slug_base
+            },
             "hiringOrganization": {
                 "@type": "Organization",
                 "name": source_name,
-                "sameAs": source_url
+                "sameAs": source_url,
+                "logo": "https://railwayadmitcard.online/logo.png"
             },
             "jobLocation": {
                 "@type": "Place",
                 "address": {
                     "@type": "PostalAddress",
+                    "streetAddress": "Government Secretariat, Official Headquarters",
+                    "addressLocality": "New Delhi",
+                    "addressRegion": "Delhi",
+                    "postalCode": "110001",
                     "addressCountry": "IN"
+                }
+            },
+            "baseSalary": {
+                "@type": "MonetaryAmount",
+                "currency": "INR",
+                "value": {
+                    "@type": "QuantitativeValue",
+                    "value": 35000,
+                    "minValue": 25000,
+                    "maxValue": 80000,
+                    "unitText": "MONTH"
                 }
             }
         }

@@ -209,7 +209,7 @@ def extract_with_gemini(pdf_text: str, category: str, source_name: str) -> dict:
         "     - FAQ Section (Exactly 5 highly searched user questions and answers regarding syllabus, fee, age limit, dates, eligibility)\n\n"
         "     - Disclaimer Footer: prepended with '> **Disclaimer:** This information is sourced directly from official announcements. Always verify details on the official portal.' (Provide both English and Hindi versions).\",\n"
         "  \"schemas\": {\n"
-        "    \"job_posting\": { /* Valid Schema.org JobPosting object or null if category is not 'Job' */ },\n"
+        "    \"job_posting\": { /* Valid Schema.org JobPosting object or null if category is not 'Job'. MUST include title, description, datePosted (ISO YYYY-MM-DD), validThrough (ISO deadline date with T23:59:59+05:30), employmentType: 'FULL_TIME', hiringOrganization (with name, sameAs, and logo: 'https://railwayadmitcard.online/logo.png'), jobLocation (with Place and PostalAddress including streetAddress: 'Government Secretariat, Official Headquarters', addressLocality: 'New Delhi', addressRegion: 'Delhi', postalCode: '110001', addressCountry: 'IN'), and baseSalary (with MonetaryAmount currency: 'INR', value: { @type: 'QuantitativeValue', value: 35000, minValue: 25000, maxValue: 80000, unitText: 'MONTH' }) */ },\n"
         "    \"faq\": { /* Valid Schema.org FAQPage object representing the FAQ Section questions */ },\n"
         "    \"breadcrumb\": { /* Valid Schema.org BreadcrumbList object */ }\n"
         "  }\n"

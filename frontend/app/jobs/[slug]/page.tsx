@@ -5,6 +5,7 @@ import { ArrowLeft, Calendar, GraduationCap, MapPin, CheckCircle, RefreshCw, Sha
 import PrintButton from "../../../components/PrintButton";
 import ViewTracker from "../../../components/ViewTracker";
 import { marked } from "marked";
+import { enrichJobPostingSchema } from "../../../lib/schema";
 
 import { Metadata } from "next";
 
@@ -127,10 +128,9 @@ export default async function JobDetail({ params }: PageProps) {
       {/* Schema.org JSON-LD for Search Engines */}
       {schemas && Object.entries(schemas).map(([key, schemaObj]) => {
         if (!schemaObj) return null;
-        const updatedSchema = { ...(schemaObj as any) };
+        let updatedSchema = { ...(schemaObj as any) };
         if (key === "job_posting") {
-          updatedSchema.datePosted = todayISO;
-          updatedSchema.dateModified = todayISO;
+          updatedSchema = enrichJobPostingSchema(updatedSchema, notification, todayISO);
         }
         return (
           <script
